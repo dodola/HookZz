@@ -16,7 +16,8 @@
 class ARM64Relocator {
 
   public:
-    int relocatedInstBytesSize;
+    int limitRelocateInstSize;
+    int relocatedInstSize;
     int needRelocateInputCount;
     int doneRelocateInputCount;
 
@@ -28,9 +29,9 @@ class ARM64Relocator {
     std::map<int, int> indexRelocatedInputOutput;
 
   public:
-    ARM64Relocator(void);
+    ARM64Relocator(ARM64AssemblyReader *input, ARM64AssemblerWriter *output);
 
-    void reset(void);
+    void reset();
 
     void tryRelocate(void *address, int bytes_min, int *bytes_max);
 
@@ -43,6 +44,7 @@ class ARM64Relocator {
     void relocateWrite();
     void relocateWriteAll();
 
+    void rewrite_LoadLiteral(ARM64InstructionCTX *instCTX);
     void rewrite_BaseCmpBranch(ARM64InstructionCTX *instCTX);
     void rewrite_BranchCond(ARM64InstructionCTX *instCTX);
     void rewrite_B(ARM64InstructionCTX *instCTX);

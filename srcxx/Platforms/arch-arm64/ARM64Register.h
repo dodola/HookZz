@@ -51,5 +51,6 @@ typedef struct _ARM64RegInfo {
 } ARM64RegInfo;
 
 void DescribeARM64Reigster(ARM64Reg reg, ARM64RegInfo *ri);
+ARM64Reg DisDescribeARM64Reigster(int regIndex, int regWith);
 
 #endif //HOOKZZ_ARM64REGISTER_H

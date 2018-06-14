@@ -11,8 +11,15 @@
 #include <iostream>
 #include <vector>
 
+typedef struct _FunctionBackup {
+    void  *address;
+    int size;
+    char data[32];
+} FunctionBackup;
+
 class Interceptor;
-class HookEntryBackend;
+
+struct HookEntryBackend;
 
 typedef struct _HookEntry {
     zz_ptr_t target_address;
@@ -21,25 +28,30 @@ typedef struct _HookEntry {
 
     unsigned long id;
 
-    bool isEnabled;
+    bool isTryNearJump;
 
     bool isNearJump;
 
+    bool isEnabled;
+
     ThreadLocalKey *thread_local_key;
 
-    zz_ptr_t pre_call;
-    zz_ptr_t post_call;
-    zz_ptr_t stub_call;
-    zz_ptr_t replace_call;
+    void * pre_call;
+    void * post_call;
+    void * stub_call;
+    void * replace_call;
 
-    zz_ptr_t on_enter_transfer_trampoline;
-    zz_ptr_t on_enter_trampoline;
-    zz_ptr_t on_invoke_trampoline;
-    zz_ptr_t on_leave_trampoline;
-    zz_ptr_t on_dynamic_binary_instrumentation_trampoline;
+    void * on_enter_transfer_trampoline;
+    void * on_enter_trampoline;
+    void * on_invoke_trampoline;
+    void * on_leave_trampoline;
+    void * on_dynamic_binary_instrumentation_trampoline;
 
-    struct _HookEntryBackend *backend;
-    // struct _Interceptor *interceptor;
+    FunctionBackup origin_prologue;
+
+    struct HookEntryBackend *backend;
+
+    class Interceptor *interceptor;
 } HookEntry;
 
 class _InterceptorBackend;
@@ -56,8 +68,13 @@ class Interceptor {
 
   public:
     static Interceptor *GETInstance();
+
     HookEntry *findHookEntry(void *target_address);
+
     void addHookEntry(HookEntry *hook_entry);
+
+    void initializeBackend(MemoryManager *mm);
+
 
   private:
     Interceptor() {}

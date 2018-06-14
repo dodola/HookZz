@@ -25,6 +25,9 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+    typedef uintptr_t zz_addr_t;
+    typedef void * zz_ptr_t;
+
 #ifndef REGISTER_STATE_STRUCT
 #define REGISTER_STATE_STRUCT
 #if defined(__arm64__) || defined(__aarch64__)

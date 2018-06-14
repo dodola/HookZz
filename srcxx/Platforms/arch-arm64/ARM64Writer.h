@@ -17,9 +17,9 @@ class ARM64AssemblerWriter {
     std::vector<char> instBytes;
 
   public:
-    ARM64AssemblerWriter();
+    ARM64AssemblerWriter(void *pc);
 
-    void reset();
+    void reset(void *pc);
 
     void putBytes(void *data, int dataSize);
 

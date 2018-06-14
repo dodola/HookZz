@@ -17,14 +17,14 @@ class ARM64AssemblyReader {
 
   public:
     void *start_pc;
+    void *start_address;
     std::vector<ARM64InstructionCTX *> instCTXs;
-    char instByteBuffer[1024];
     std::vector<char> instBytes;
 
   public:
-    ARM64AssemblyReader(void *address);
+    ARM64AssemblyReader(void *address, void *pc);
 
-    void reset(void);
+    void reset(void *address, void *pc);
 
     ARM64InstructionCTX *readInstruction();
 };

@@ -3,15 +3,18 @@
 //
 
 #include "ARM64Writer.h"
+#include <string.h>
+#include <assert.h>
 
 inline void ReadBytes(void *data, void *address, int length) { memcpy(data, address, length); }
 
-ARM64AssemblerWriter::ARM64AssemblerWriter():start_pc(NULL) {
+ARM64AssemblerWriter::ARM64AssemblerWriter(void *pc):start_pc(pc) {
     instBytes.reserve(1024);
 }
 
-void ARM64AssemblerWriter::reset() {
+void ARM64AssemblerWriter::reset(void *pc) {
     instBytes.clear();
+    start_pc = pc;
 }
 
 void ARM64AssemblerWriter::putBytes(void *data, int dataSize) {

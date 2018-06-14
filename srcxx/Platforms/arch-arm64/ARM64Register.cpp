@@ -28,3 +28,10 @@ void DescribeARM64Reigster(ARM64Reg reg, ARM64RegInfo *ri) {
     }
     ri->index = ri->meta - ARM64_REG_X0;
 }
+
+ARM64Reg DisDescribeARM64Reigster(int regIndex, int regWith) {
+    if(regWith == 0)
+        regWith = 64;
+
+    return (ARM64Reg)regIndex - ARM64_REG_X0;
+}
