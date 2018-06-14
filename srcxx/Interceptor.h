@@ -5,9 +5,11 @@
 #ifndef HOOKZZ_INTERCEPTOR_H
 #define HOOKZZ_INTERCEPTOR_H
 
+#include "MemoryManager.h"
+#include "ThreadManager.h"
+#include "hookzz.h"
 #include <iostream>
 #include <vector>
-#include "hookzz.h"
 
 class Interceptor;
 class HookEntryBackend;
@@ -23,9 +25,7 @@ typedef struct _HookEntry {
 
     bool isNearJump;
 
-    zz_ptr_t thread_local_key;
-
-    FunctionBackup origin_prologue;
+    ThreadLocalKey *thread_local_key;
 
     zz_ptr_t pre_call;
     zz_ptr_t post_call;
@@ -45,23 +45,23 @@ typedef struct _HookEntry {
 class _InterceptorBackend;
 
 class Interceptor {
-public:
+  public:
     bool isSupportRXMemory;
     std::vector<HookEntry *> hook_entries;
-private:
+
+  private:
     struct _InterceptorBackend *backend;
-    MemoryManager *emm;
-    static Interceptor* interceptor;
+    MemoryManager *mm;
+    static Interceptor *interceptor;
 
-
-public:
-    static Interceptor* sharedInstance();
+  public:
+    static Interceptor *GETInstance();
     HookEntry *findHookEntry(void *target_address);
     void addHookEntry(HookEntry *hook_entry);
 
-private:
-    Interceptor(){}
-    ~Interceptor(){}
+  private:
+    Interceptor() {}
+    ~Interceptor() {}
 };
 
 #endif //HOOKZZ_INTERCEPTOR_H

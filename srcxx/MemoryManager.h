@@ -10,37 +10,58 @@
 #include <iostream>
 #include <vector>
 
+#include "CommonClass/DesignPattern/Singleton.h"
+
 #include "hookzz.h"
 
+typedef enum _MemoryAttribute { MEM_RX } MemoryAttribute;
+
 typedef struct _CodeSlice {
-    bool isUsed;
-    bool isCodeCave;
-    void data;
+    void *data;
     int size;
 } CodeSlice;
 
+typedef struct _CodeCave {
+    int size;
+    void *backup;
+    zz_addr_t address;
+} CodeCave;
+
 typedef struct _MemoryBlock {
-    bool isCodeCave;
-    zz_addr_t start_address;
-    zz_addr_t current_address;
-    int total_size;
-    int used_size;
+    int prot; // memory permission
+    int size;
+    zz_addr_t address;
 } MemoryBlock;
 
-class MemoryManager {
-public:
-    std::vector<MemoryBlock *> memory_blocks;
-private:
-    static MemoryManager
+typedef struct _FreeMemoryBlock {
+    MemoryAttribute prot; // memory permission
+    int total_size;
+    int used_size;
+    zz_addr_t address;
+} FreeMemoryBlock;
 
-public:
-    static Interceptor* sharedInstance();
-    HookEntry *findHookEntry(void *target_address);
-    void addHookEntry(HookEntry *hook_entry);
+class MemoryManager : public Singleton {
+  public:
+    bool is_support_rx_memory;
+    std::vector<CodeCave *> code_caves;
+    std::vector<MemoryBlock *> process_memory_layout;
+    std::vector<FreeMemoryBlock *> free_memory_blocks;
 
-private:
-    Interceptor(){}
-    ~Interceptor(){}
+  public:
+    static bool isSupportRXMemory();
+
+    static int PageSize();
+
+    static void *allocateMemoryPage(MemoryAttribute prot, int n);
+
+    void CodePatch(void *dest, void *src, int count);
+
+
+    CodeSlice *allocateCodeSlice(int need_size);
+
+    void getProcessMemoryLayout();
+
+    CodeCave *searchNearCodeCave(void *address, int range, int need_size);
 };
 
 #endif //HOOKZZ_MEMORYMANAGER_H

@@ -5,11 +5,11 @@
 #ifndef HOOKZZ_MANAGER_H
 #define HOOKZZ_MANAGER_H
 
-template <typename ItemType>
-class CollectionSharedManager {
-public:
+#include <iostream>
+#include <vector>
+
+template <typename ItemType> class CollectionManager {
+  public:
     std::vector<ItemType> items;
-private:
-    static CollectionSharedManager *manager;
 };
 #endif //HOOKZZ_MANAGER_H

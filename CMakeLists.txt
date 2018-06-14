@@ -46,6 +46,11 @@ set(HookZz.Path .)
 set(GLOBAL.SOURCE_DIR
         ${HookZz.Path}/srcxx
         ${HookZz.Path}/srcxx/CommonClass
+        ${HookZz.Path}/srcxx/CommonClass/DesignPattern
+        ${HookZz.Path}/srcxx/Platforms
+        ${HookZz.Path}/srcxx/Platforms/arch-arm64
+        ${HookZz.Path}/srcxx/Platforms/backend-darwin
+        ${HookZz.Path}/srcxx/Platforms/backend-posix
         )
 
 set(GLOBAL.HEADER_DIR
@@ -63,5 +68,5 @@ search_suffix_files("h" GLOBAL.SOURCE_DIR HookZz.HEADER_H)
 set(GLOBAL.SOURCE_FILE ${GLOBAL.SOURCE_FILE} ${HookZz.SOURCE_CPP})
 set(GLOBAL.HEADER_FILE ${GLOBAL.HEADER_FILE} ${HookZz.HEADER_H})
 
-include_directories(${GLOBAL.HEADER_DIR})
+include_directories(${GLOBAL.HEADER_DIR} ${GLOBAL.SOURCE_DIR})
 add_library(HookZz STATIC ${GLOBAL.SOURCE_FILE} ${GLOBAL.HEADER_FILE})
