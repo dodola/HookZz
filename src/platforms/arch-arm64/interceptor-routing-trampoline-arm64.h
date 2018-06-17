@@ -14,20 +14,23 @@
  *    limitations under the License.
  */
 
-#ifndef thread_h
-#define thread_h
+#ifndef interceptor_routing_trampoline_arm64_h
+#define interceptor_routing_trampoline_arm64_h
 
 #include "hookzz.h"
-#include "zkit.h"
+#include "interceptor.h"
 
-zz_ptr_t ThreadNewThreadLocalKeyPtr();
+#define CTX_SAVE_STACK_OFFSET (8 + 30 * 8 + 8 * 16)
 
-bool ThreadFreeThreadLocalKeyPtr(zz_ptr_t thread_local_key);
+typedef struct _interceptor_backend_arm64_t {
+    memory_manager_t *memory_manager;
+    ARM64Relocator relocator_arm64;
+    ARM64AssemblyrWriter writer_arm64;
+    ARM64AssemblyReader reader_arm64;
+} interceptor_backend_arm64_t;
 
-zz_ptr_t ThreadGetThreadLocalValue(zz_ptr_t thread_local_key);
-
-bool ThreadSetThreadLocalValue(zz_ptr_t thread_local_key, zz_ptr_t data);
-
-long ThreadGetCurrentThreadID();
+typedef struct _hook_entry_backend_arm64_t {
+    int limit_relocate_inst_size;
+} hook_entry_backend_arm64_t;
 
 #endif

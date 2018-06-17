@@ -8,7 +8,7 @@
 #include <debuglog.h>
 #include <hookzz.h>
 
-void context_begin_invocation(RegState *rs, HookEntry *entry, void *nextHop, void *retAddr) {
+void context_begin_invocation(reg_state_t *rs, hook_entry_t *entry, void *nextHop, void *retAddr) {
     // DEBUG_LOG("target %p call begin-invocation", entry->target_ptr);
 
     // For iOS Easy Debug Breakpoint
@@ -39,21 +39,21 @@ void context_begin_invocation(RegState *rs, HookEntry *entry, void *nextHop, voi
         *(zz_ptr_t *)nextHop = entry->on_invoke_trampoline;
     }
 
-    if (entry->hook_type == HOOK_TYPE_FUNCTION_via_PRE_POST || entry->hook_type == HOOK_TYPE_FUNCTION_via_GOT) {
+    if (entry->type == HOOK_TYPE_FUNCTION_via_PRE_POST || entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
         callstack->retAddr   = *(zz_ptr_t *)retAddr;
         *(zz_ptr_t *)retAddr = entry->on_leave_trampoline;
     }
 }
 
-void context_begin_invocation_bridge_handler(RegState *rs, ClosureBridgeData *cbd) {
-    HookEntry *entry = cbd->user_data;
-    void *nextHopPTR = (void *)&rs->general.regs.r12;
-    void *regLRPTR   = (void *)&rs->lr;
+void context_begin_invocation_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd) {
+    hook_entry_t *entry = cbd->user_data;
+    void *nextHopPTR    = (void *)&rs->general.regs.r12;
+    void *regLRPTR      = (void *)&rs->lr;
     context_begin_invocation(rs, entry, nextHopPTR, regLRPTR);
     return;
 }
 
-void context_end_invocation(RegState *rs, HookEntry *entry, void *nextHop) {
+void context_end_invocation(reg_state_t *rs, hook_entry_t *entry, void *nextHop) {
     // DEBUG_LOG("%p call end-invocation", entry->target_ptr);
 
     ThreadStack *threadstack = ThreadStackGetByThreadLocalKey(entry->thread_local_key);
@@ -77,14 +77,14 @@ void context_end_invocation(RegState *rs, HookEntry *entry, void *nextHop) {
     CallStackFree(callstack);
 }
 
-void context_end_invocation_bridge_handler(RegState *rs, ClosureBridgeData *cbd) {
-    HookEntry *entry = cbd->user_data;
-    void *nextHopPTR = (void *)&rs->general.regs.r12;
+void context_end_invocation_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd) {
+    hook_entry_t *entry = cbd->user_data;
+    void *nextHopPTR    = (void *)&rs->general.regs.r12;
     context_end_invocation(rs, entry, nextHopPTR);
     return;
 }
 
-void dynamic_binary_instrumentation_invocation(RegState *rs, HookEntry *entry, void *nextHop) {
+void dynamic_binary_instrumentation_invocation(reg_state_t *rs, hook_entry_t *entry, void *nextHop) {
     DEBUG_LOG("target %p call dynamic-binary-instrumentation-invocation", entry->target_ptr);
 
     /* call pre_call */
@@ -100,9 +100,9 @@ void dynamic_binary_instrumentation_invocation(RegState *rs, HookEntry *entry, v
     *(zz_ptr_t *)nextHop = entry->on_invoke_trampoline;
 }
 
-void dynamic_binary_instrumentationn_bridge_handler(RegState *rs, ClosureBridgeData *cbd) {
-    HookEntry *entry = cbd->user_data;
-    void *nextHopPTR = (void *)&rs->general.regs.r12;
+void dynamic_binary_instrumentationn_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd) {
+    hook_entry_t *entry = cbd->user_data;
+    void *nextHopPTR    = (void *)&rs->general.regs.r12;
     dynamic_binary_instrumentation_invocation(rs, entry, nextHopPTR);
     return;
 }

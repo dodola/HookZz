@@ -25,7 +25,7 @@
 #>>> cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/ios.toolchain.cmake -DIOS_PLATFORM=OS -DIOS_ARCH=armv7 -DENABLE_ARC=FALSE -DZPLATFORM=iOS -DZARCH=armv7
 #>>> make
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(HookZz)
 
 include(cmake/Util.cmake)
@@ -36,37 +36,70 @@ enable_language(ASM)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
 
+
+option(CXX ON "use cxx source")
+option(SHAREDLIB ON "build shared library")
+
 set(GLOBAL.SOURCE_FILE)
 set(GLOBAL.SOURCE_DIR)
 set(GLOBAL.HEADER_FILE)
 set(GLOBAL.HEADER_DIR)
 
-set(HookZz.Path .)
+if(CXX)
+    # build cxx source
+    set(HookZz.Path .)
+    set(GLOBAL.SOURCE_DIR
+            ${HookZz.Path}/srcxx
+            ${HookZz.Path}/srcxx/CommonClass
+            ${HookZz.Path}/srcxx/CommonClass/DesignPattern
+            ${HookZz.Path}/srcxx/Platforms
+            ${HookZz.Path}/srcxx/Platforms/arch-arm64
+            ${HookZz.Path}/srcxx/Platforms/backend-darwin
+            ${HookZz.Path}/srcxx/Platforms/backend-posix
+            )
 
-set(GLOBAL.SOURCE_DIR
-        ${HookZz.Path}/srcxx
-        ${HookZz.Path}/srcxx/CommonClass
-        ${HookZz.Path}/srcxx/CommonClass/DesignPattern
-        ${HookZz.Path}/srcxx/Platforms
-        ${HookZz.Path}/srcxx/Platforms/arch-arm64
-        ${HookZz.Path}/srcxx/Platforms/backend-darwin
-        ${HookZz.Path}/srcxx/Platforms/backend-posix
-        )
+    set(GLOBAL.HEADER_DIR
+            ${HookZz.Path}/include
+            )
 
-set(GLOBAL.HEADER_DIR
-        ${HookZz.Path}/include
-        )
+    # *.cpp
+    search_suffix_files("cpp" GLOBAL.SOURCE_DIR HookZz.SOURCE_CPP)
 
+    # *.h
+    search_suffix_files("h" GLOBAL.SOURCE_DIR HookZz.HEADER_H)
 
+    set(GLOBAL.SOURCE_FILE ${GLOBAL.SOURCE_FILE} ${HookZz.SOURCE_CPP})
+    set(GLOBAL.HEADER_FILE ${GLOBAL.HEADER_FILE} ${HookZz.HEADER_H})
+else()
+    # build c source
+    set(HookZz.Path .)
+    set(GLOBAL.SOURCE_DIR
+            ${HookZz.Path}/src
+            ${HookZz.Path}/src/platforms/arch-arm64
+            ${HookZz.Path}/src/platforms/backend-linux
+            ${HookZz.Path}/src/platforms/backend-posix
+            )
 
-# *.cpp
-search_suffix_files("cpp" GLOBAL.SOURCE_DIR HookZz.SOURCE_CPP)
+    set(GLOBAL.HEADER_DIR
+            ${HookZz.Path}/include
+            )
 
-# *.h
-search_suffix_files("h" GLOBAL.SOURCE_DIR HookZz.HEADER_H)
+    # *.c
+    search_suffix_files("c" GLOBAL.SOURCE_DIR HookZz.SOURCE_C)
 
-set(GLOBAL.SOURCE_FILE ${GLOBAL.SOURCE_FILE} ${HookZz.SOURCE_CPP})
-set(GLOBAL.HEADER_FILE ${GLOBAL.HEADER_FILE} ${HookZz.HEADER_H})
+    # *.h
+    search_suffix_files("h" GLOBAL.SOURCE_DIR HookZz.HEADER_H)
+
+    set(GLOBAL.SOURCE_FILE ${GLOBAL.SOURCE_FILE} ${HookZz.SOURCE_C})
+    set(GLOBAL.HEADER_FILE ${GLOBAL.HEADER_FILE} ${HookZz.HEADER_H})
+endif()
 
 include_directories(${GLOBAL.HEADER_DIR} ${GLOBAL.SOURCE_DIR})
-add_library(HookZz STATIC ${GLOBAL.SOURCE_FILE} ${GLOBAL.HEADER_FILE})
+
+if(SHAREDLIB)
+    # build shared library
+    add_library(hookzz SHARED ${GLOBAL.SOURCE_FILE} ${GLOBAL.HEADER_FILE})
+else()
+    # build static library
+    add_library(hookzz STATIC ${GLOBAL.SOURCE_FILE} ${GLOBAL.HEADER_FILE})
+endif()

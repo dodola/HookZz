@@ -13,7 +13,7 @@
 
 InterceptorBackend *InteceptorBackendNew(ExecuteMemoryManager *emm) { return NULL; }
 
-void TrampolineFree(HookEntry *entry) {
+void trampoline_free(hook_entry_t *entry) {
     if (entry->on_invoke_trampoline) {
         //TODO
     }
@@ -36,17 +36,17 @@ void TrampolineFree(HookEntry *entry) {
     return;
 }
 
-void TrampolinePrepare(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_prepare(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
 // double jump
-void TrampolineBuildForEnterTransfer(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
-void TrampolineBuildForEnter(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_build_for_enter(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
-void TrampolineBuildForDynamicBinaryInstrumentation(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_build_for_dynamic_binary_instrumentation(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
-void TrampolineBuildForInvoke(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_build_for_invoke(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
-void TrampolineBuildForLeave(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_build_for_leave(InterceptorBackend *self, hook_entry_t *entry) { return; }
 
-void TrampolineActivate(InterceptorBackend *self, HookEntry *entry) { return; }
+void trampoline_active(InterceptorBackend *self, hook_entry_t *entry) { return; }

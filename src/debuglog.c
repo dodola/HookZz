@@ -12,16 +12,16 @@ bool DebugLogControlerIsEnableDebugbreak() { return gDebugLogControler.is_enable
 
 DebugLogControler *DebugLogControlerSharedInstance(void) { return &gDebugLogControler; }
 
-void Log_TrampolineBuildForEnterTransfer(HookEntry *entry, CodeSlice *codeslice) {
+void Log_trampoline_build_for_enter_transfer(hook_entry_t *entry, CodeSlice *codeslice) {
     if (DebugLogControlerIsEnableLog()) {
         char buffer[1024] = {};
         sprintf(buffer + strlen(buffer), "\n======= EnterTransferTrampoline ======= \n");
         sprintf(buffer + strlen(buffer), "\ton_enter_transfer_trampoline: %p\n", entry->on_enter_transfer_trampoline);
         sprintf(buffer + strlen(buffer), "\ttrampoline_length: %ld\n", codeslice->size);
         sprintf(buffer + strlen(buffer), "\thook_entry: %p\n", (void *)entry);
-        if (entry->hook_type == HOOK_TYPE_FUNCTION_via_REPLACE) {
+        if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
             sprintf(buffer + strlen(buffer), "\tjump_target: replace_call(%p)\n", (void *)entry->replace_call);
-        } else if (entry->hook_type == HOOK_TYPE_DBI) {
+        } else if (entry->type == HOOK_TYPE_DBI) {
             sprintf(buffer + strlen(buffer), "\tjump_target: on_dynamic_binary_instrumentation_trampoline(%p)\n",
                     (void *)entry->on_dynamic_binary_instrumentation_trampoline);
         } else {
@@ -32,7 +32,7 @@ void Log_TrampolineBuildForEnterTransfer(HookEntry *entry, CodeSlice *codeslice)
     }
 }
 
-void Log_TrampolineBuildForEnter(HookEntry *entry) {
+void Log_trampoline_build_for_enter(hook_entry_t *entry) {
     // debug log
     if (DebugLogControlerIsEnableLog()) {
         char buffer[1024] = {};
@@ -42,7 +42,7 @@ void Log_TrampolineBuildForEnter(HookEntry *entry) {
     }
 }
 
-void Log_TrampolineBuildForInvoke(HookEntry *entry, CodeSlice *codeslice) {
+void Log_trampoline_build_for_invoke(hook_entry_t *entry, CodeSlice *codeslice) {
     // debug log
     if (DebugLogControlerIsEnableLog()) {
         char buffer[1024] = {};
@@ -53,7 +53,7 @@ void Log_TrampolineBuildForInvoke(HookEntry *entry, CodeSlice *codeslice) {
     }
 }
 
-void Log_TrampolineBuildForLeave(HookEntry *entry) {
+void Log_trampoline_build_for_leave(hook_entry_t *entry) {
     // debug log
     if (DebugLogControlerIsEnableLog()) {
         char buffer[1024] = {};

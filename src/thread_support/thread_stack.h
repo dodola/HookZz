@@ -18,7 +18,6 @@
 #define stack_h
 
 #include "hookzz.h"
-#include "zkit.h"
 
 #include "memhelper.h"
 #include "thread.h"

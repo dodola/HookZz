@@ -51,12 +51,12 @@ __attribute__((naked)) void closure_bridge_template() {
 
     // prepare args
     // @x0: data_address
-    // @x1: RegState stack address
+    // @x1: reg_state_t stack address
     xASM("mov x0, sp");
     xASM("mov x1, x14");
     xASM("bl _common_bridge_handler");
 
-    // ======= RegState Restore =======
+    // ======= reg_state_t Restore =======
     // restore x0
     xASM("ldr x0, [sp, #8]");
     xASM("add sp, sp, #(2*8)");
@@ -143,12 +143,12 @@ __attribute__((naked)) void dynamic_closure_bridge_template() {
 
     // prepare args
     // @x0: data_address
-    // @x1: RegState stack address
+    // @x1: reg_state_t stack address
     xASM("mov x0, sp");
     xASM("mov x1, x14");
     xASM("bl _dynamic_common_bridge_handler");
 
-    // ======= RegState Restore =======
+    // ======= reg_state_t Restore =======
     // restore x0
     xASM("ldr x0, [sp, #8]");
     xASM("add sp, sp, #(2*8)");
@@ -235,12 +235,12 @@ __attribute__((naked)) void dynamic_closure_bridge_template() {
 
 //     // prepare args
 //     // @x0: data_address
-//     // @x1: RegState stack address
+//     // @x1: reg_state_t stack address
 //     xASM("mov x0, sp");
 //     xASM("mov x1, #0");
 //     xASM("bl _context_begin_invocation_bridge_handler");
 
-//     // ======= RegState Restore =======
+//     // ======= reg_state_t Restore =======
 //     // restore x0
 //     xASM("ldr x0, [sp, #8]");
 //     xASM("add sp, sp, #(2*8)");
@@ -316,12 +316,12 @@ __attribute__((naked)) void dynamic_closure_bridge_template() {
 
 //     // prepare args
 //     // @x0: data_address
-//     // @x1: RegState stack address
+//     // @x1: reg_state_t stack address
 //     xASM("mov x0, sp");
 //     xASM("mov x1, #0");
 //     xASM("bl _context_end_invocation_bridge_handler");
 
-//     // ======= RegState Restore =======
+//     // ======= reg_state_t Restore =======
 //     // restore x0
 //     xASM("ldr x0, [sp, #8]");
 //     xASM("add sp, sp, #(2*8)");

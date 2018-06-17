@@ -17,19 +17,13 @@
 #ifndef platforms_arch_arm64_writer_h
 #define platforms_arch_arm64_writer_h
 
-#include "zkit.h"
-
-#include "memhelper.h"
-#include "writer.h"
-
 #include "instructions.h"
 #include "regs-arm64.h"
 #include "writer-arm64.h"
 
 #define MAX_INSN_SIZE 256
 
-typedef struct _ARM64AssemblerWriter
-{
+typedef struct _ARM64AssemblerWriter {
     ARM64InstructionCTX *insnCTXs[MAX_INSN_SIZE];
     zz_size_t insnCTXs_count;
     zz_addr_t start_pc;
@@ -75,11 +69,9 @@ void arm64_writer_put_b_imm(ARM64AssemblyrWriter *self, uint64_t offset);
 
 void arm64_writer_put_b_cond_imm(ARM64AssemblyrWriter *self, uint32_t condition, uint64_t imm);
 
-void arm64_writer_put_add_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg,
-                                      uint64_t imm);
+void arm64_writer_put_add_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg, uint64_t imm);
 
-void arm64_writer_put_sub_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg,
-                                      uint64_t imm);
+void arm64_writer_put_sub_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg, uint64_t imm);
 
 void arm64_writer_put_bytes(ARM64AssemblyrWriter *self, char *data, zz_size_t size);
 

@@ -1,8 +1,6 @@
 #ifndef arch_arm64_instructions_h
 #define arch_arm64_instructions_h
 
-#include "zkit.h"
-
 typedef struct _ARM64InstructionCTX {
     zz_addr_t pc;
     zz_addr_t address;

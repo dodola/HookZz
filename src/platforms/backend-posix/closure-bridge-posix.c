@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-extern void common_bridge_handler(RegState *rs, ClosureBridgeData *cbd);
+extern void common_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd);
 
 #define closure_bridge_trampoline_template_length (7 * 4)
 

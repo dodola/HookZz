@@ -7,7 +7,7 @@
 #include "trampoline.h"
 
 RetStatus ZzBuildHook(zz_ptr_t target_ptr, zz_ptr_t replace_call_ptr, zz_ptr_t *origin_ptr, PRECALL pre_call_ptr,
-                      POSTCALL post_call_ptr, bool try_near_jump, HookType hook_type) {
+                      POSTCALL post_call_ptr, bool try_near_jump, HookType type) {
 // HookZz do not support x86 now.
 #if defined(__i386__) || defined(__x86_64__)
     DEBUGLOG_COMMON_LOG("%s", "x86 & x86_64 arch not support");
@@ -15,9 +15,9 @@ RetStatus ZzBuildHook(zz_ptr_t target_ptr, zz_ptr_t replace_call_ptr, zz_ptr_t *
 #endif
 
     RetStatus status                      = RS_DONE_HOOK;
-    ZzInterceptor *interceptor            = NULL;
+    Interceptor *interceptor              = NULL;
     HookEntrySet *hook_function_entry_set = NULL;
-    HookEntry *entry                      = NULL;
+    hook_entry_t *entry                   = NULL;
 
     interceptor = InterceptorSharedInstance();
     if (!interceptor) {
@@ -31,11 +31,11 @@ RetStatus ZzBuildHook(zz_ptr_t target_ptr, zz_ptr_t replace_call_ptr, zz_ptr_t *
             status = RS_ALREADY_HOOK;
             break;
         }
-        entry = (HookEntry *)malloc0(sizeof(HookEntry));
+        entry = (hook_entry_t *)malloc0(sizeof(hook_entry_t));
 
         // TODO: check return status
-        HookEntryInitialize(entry, hook_type, target_ptr, replace_call_ptr, pre_call_ptr, post_call_ptr, try_near_jump);
-        TrampolineBuildAll(interceptor->backend, entry);
+        HookEntryInitialize(entry, type, target_ptr, replace_call_ptr, pre_call_ptr, post_call_ptr, try_near_jump);
+        trampoline_build_all(interceptor->backend, entry);
         InterceptorAddHookEntry(entry);
 
         if (origin_ptr)
@@ -45,9 +45,9 @@ RetStatus ZzBuildHook(zz_ptr_t target_ptr, zz_ptr_t replace_call_ptr, zz_ptr_t *
 }
 
 void ZzEnableHook(zz_ptr_t target_ptr) {
-    RetStatus status           = RS_DONE_ENABLE;
-    ZzInterceptor *interceptor = NULL;
-    HookEntry *entry           = NULL;
+    RetStatus status         = RS_DONE_ENABLE;
+    Interceptor *interceptor = NULL;
+    hook_entry_t *entry      = NULL;
 
     interceptor = InterceptorSharedInstance();
     if (!interceptor) {
@@ -57,7 +57,7 @@ void ZzEnableHook(zz_ptr_t target_ptr) {
 
     if (!entry) {
         status = RS_NO_BUILD_HOOK;
-        ERROR_LOG(" %p not build HookEntry!", target_ptr);
+        ERROR_LOG(" %p not build hook_entry_t!", target_ptr);
         return;
     }
 
@@ -70,14 +70,14 @@ void ZzEnableHook(zz_ptr_t target_ptr) {
     }
 
     // key function.
-    TrampolineActivate(interceptor->backend, entry);
+    trampoline_active(interceptor->backend, entry);
     return;
 }
 
 RetStatus ZzDisableHook(zz_ptr_t target_ptr) {
-    RetStatus status           = RS_DONE_ENABLE;
-    ZzInterceptor *interceptor = NULL;
-    HookEntry *entry           = NULL;
+    RetStatus status         = RS_DONE_ENABLE;
+    Interceptor *interceptor = NULL;
+    hook_entry_t *entry      = NULL;
 
     entry       = InterceptorFindHookEntry(target_ptr);
     interceptor = InterceptorSharedInstance();
@@ -95,14 +95,14 @@ RetStatus ZzDisableHook(zz_ptr_t target_ptr) {
 
 RetStatus ZzHook(zz_ptr_t target_ptr, zz_ptr_t replace_ptr, zz_ptr_t *origin_ptr, PRECALL pre_call_ptr,
                  POSTCALL post_call_ptr, bool try_near_jump) {
-    HookType hook_type;
+    HookType type;
     if (pre_call_ptr || post_call_ptr) {
-        hook_type = HOOK_TYPE_FUNCTION_via_PRE_POST;
+        type = HOOK_TYPE_FUNCTION_via_PRE_POST;
     } else {
-        hook_type = HOOK_TYPE_FUNCTION_via_REPLACE;
+        type = HOOK_TYPE_FUNCTION_via_REPLACE;
     }
 
-    ZzBuildHook(target_ptr, replace_ptr, origin_ptr, pre_call_ptr, post_call_ptr, try_near_jump, hook_type);
+    ZzBuildHook(target_ptr, replace_ptr, origin_ptr, pre_call_ptr, post_call_ptr, try_near_jump, type);
     ZzEnableHook(target_ptr);
     return RS_SUCCESS;
 }
@@ -123,8 +123,8 @@ RetStatus ZzHookReplace(zz_ptr_t target_ptr, zz_ptr_t replace_ptr, zz_ptr_t *ori
 
 RetStatus ZzDynamicBinaryInstrumentation(zz_ptr_t insn_address, STUBCALL stub_call_ptr) {
     RetStatus status = RS_SUCCESS;
-    ZzInterceptor *interceptor;
-    HookEntry *entry;
+    Interceptor *interceptor;
+    hook_entry_t *entry;
     interceptor = InterceptorSharedInstance();
     if (!interceptor) {
         return RS_FAILED;
@@ -135,11 +135,11 @@ RetStatus ZzDynamicBinaryInstrumentation(zz_ptr_t insn_address, STUBCALL stub_ca
         status = RS_ALREADY_HOOK;
         return status;
     }
-    entry = (HookEntry *)malloc0(sizeof(HookEntry));
+    entry = (hook_entry_t *)malloc0(sizeof(hook_entry_t));
 
     HookEntryInitialize(entry, HOOK_TYPE_DBI, insn_address, NULL, NULL, NULL, true);
     entry->stub_call = stub_call_ptr;
-    TrampolineBuildAll(interceptor->backend, entry);
+    trampoline_build_all(interceptor->backend, entry);
     InterceptorAddHookEntry(entry);
     ZzEnableHook(insn_address);
     return status;

@@ -14,20 +14,21 @@
  *    limitations under the License.
  */
 
-#include "memhelper.h"
+#ifndef thread_local_storage_h
+#define thread_local_storage_h
 
-#include <stdlib.h>
-#include <string.h>
+#include "hookzz.h"
 
-void *malloc0(zz_size_t size) {
-    void *tmp = (void *)malloc(size);
-    memset(tmp, 0, size);
-    return tmp;
-}
+void thread_create_thread_local_key();
 
-RetStatus ZzRuntimeCodePatch(void *address, void *codedata, unsigned long codedata_size) {
-    //    zz_addr_t address_aligned = (zz_addr_t)address & ~(zz_addr_t)1;
-    if (!MemoryHelperPatchCode((zz_addr_t)address, codedata, codedata_size))
-        return RS_FAILED;
-    return RS_SUCCESS;
-}
+zz_ptr_t ThreadNewThreadLocalKeyPtr();
+
+bool ThreadFreeThreadLocalKeyPtr(zz_ptr_t thread_local_key);
+
+zz_ptr_t ThreadGetThreadLocalValue(zz_ptr_t thread_local_key);
+
+bool ThreadSetThreadLocalValue(zz_ptr_t thread_local_key, zz_ptr_t data);
+
+long ThreadGetCurrentThreadID();
+
+#endif

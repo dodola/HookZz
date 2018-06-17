@@ -1,76 +1,64 @@
 #ifndef interceptor_h
 #define interceptor_h
 
+#include "core.h"
 #include "hookzz.h"
-#include "zkit.h"
-
-#include "memory.h"
-#include "stack.h"
-#include "thread.h"
-#include "writer.h"
+#include "memory_manager.h"
 
 typedef struct _FunctionBackup {
-    zz_ptr_t address;
-    zz_size_t size;
+    void *address;
+    int size;
     char data[32];
 } FunctionBackup;
 
-struct _ZzInterceptor;
-struct _HookEntryBackend;
-typedef struct _HookEntry {
-    HookType hook_type;
-    unsigned long id;
-    bool isEnabled;
-    bool try_near_jump;
+struct _interceptor_t;
+struct _hook_entry_backend_t;
+typedef struct _hook_entry_t {
+    void *target_address;
 
-    zz_ptr_t thread_local_key;
+    HookType type;
 
-    zz_ptr_t target_ptr;
+    unsigned int id;
 
-    zz_addr_t next_insn_addr; // hook one instruction next insn addr
+    bool is_enable;
 
-    zz_ptr_t pre_call;
-    zz_ptr_t post_call;
-    zz_ptr_t stub_call;
-    zz_ptr_t replace_call;
+    bool is_try_near_jump;
 
-    zz_ptr_t on_enter_transfer_trampoline;
-    zz_ptr_t on_enter_trampoline;
-    zz_ptr_t on_invoke_trampoline;
-    zz_ptr_t on_leave_trampoline;
-    zz_ptr_t on_dynamic_binary_instrumentation_trampoline;
+    bool is_near_jump;
+
+    PRECALL pre_call;
+    POSTCALL post_call;
+    STUBCALL stub_call;
+    void *replace_call;
+
+    void *on_enter_transfer_trampoline;
+    void *on_enter_trampoline;
+    void *on_invoke_trampoline;
+    void *on_leave_trampoline;
+    void *on_dynamic_binary_instrumentation_trampoline;
 
     FunctionBackup origin_prologue;
-    struct _HookEntryBackend *backend;
-    struct _ZzInterceptor *interceptor;
-} HookEntry;
+    struct _hook_entry_backend_t *backend;
+    struct _interceptor_t *interceptor;
+} hook_entry_t;
 
-typedef struct {
-    HookEntry **entries;
-    zz_size_t size;
-    zz_size_t capacity;
-} HookEntrySet;
+struct _interceptor_backend_t;
 
-struct _InterceptorBackend;
-typedef struct _ZzInterceptor {
-    bool is_support_rx_page;
-    bool default_trampoline_try_near_jump;
-    HookEntrySet hook_function_entry_set;
-    struct _InterceptorBackend *backend;
-    ExecuteMemoryManager *emm;
-} ZzInterceptor;
+typedef struct _interceptor_t {
+    bool is_support_rx_memory;
+    list_t hook_entries;
+    struct _interceptor_backend_t *interceptor_backend;
+    memory_manager_t *memory_manager;
+} interceptor_t;
 
-HookEntry *InterceptorFindHookEntry(zz_ptr_t target_ptr);
+#define interceptor_cclass(member) cclass(interceptor, member)
 
-struct _InterceptorBackend *InteceptorBackendNew(ExecuteMemoryManager *emm);
+interceptor_t *interceptor_cclass(shared_instance)(void);
 
-ZzInterceptor *InterceptorSharedInstance(void);
+hook_entry_t *interceptor_cclass(find_hook_entry)(interceptor_t *self);
 
-void HookEntryInitialize(HookEntry *entry, HookType hook_type, zz_ptr_t target_ptr, zz_ptr_t replace_call,
-                         PRECALL pre_call, POSTCALL post_call, bool try_near_jump);
+void interceptor_cclass(add_hook_entry)(interceptor_t *self, hook_entry_t *entry);
 
-RetStatus InterceptorAddHookEntry(HookEntry *entry);
+void interceptor_cclass(initialize_interceptor_backend)();
 
-RetStatus ZzBuildHook(zz_ptr_t target_ptr, zz_ptr_t replace_call_ptr, zz_ptr_t *origin_ptr, PRECALL pre_call_ptr,
-                      POSTCALL post_call_ptr, bool try_near_jump, HookType hook_type);
 #endif

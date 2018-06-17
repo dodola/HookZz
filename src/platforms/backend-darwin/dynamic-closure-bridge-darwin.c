@@ -16,7 +16,7 @@
 #define dynamic_closure_trampoline_length (2 * 4)
 #define dynamic_closure_trampoline_forward_length (4 * 4)
 
-extern void dynamic_common_bridge_handler(RegState *rs, DynamicClosureTrampoline *cbd);
+extern void dynamic_common_bridge_handler(reg_state_t *rs, DynamicClosureTrampoline *cbd);
 
 static DynamicClosureTrampolineTable *gDynamicClosureTrampolineTable;
 
@@ -100,4 +100,4 @@ DynamicClosureTrampoline *DynamicClosureTrampolineAllocate(void *user_data, void
     return bridgeData;
 }
 
-static void DynamicClosureTrampolineFree(DynamicClosureTrampoline *bridgeData) { return; }
+static void DynamicClosuretrampoline_free(DynamicClosureTrampoline *bridgeData) { return; }

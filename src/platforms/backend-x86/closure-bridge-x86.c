@@ -11,7 +11,7 @@
 
 static ClosureBridgeTrampolineTable *gClosureBridageTrampolineTable;
 
-void common_bridge_handler(RegState *rs, ClosureBridgeData *cbd) {}
+void common_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd) {}
 
 static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) { return NULL; }
 

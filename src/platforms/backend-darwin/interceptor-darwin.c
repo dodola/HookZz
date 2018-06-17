@@ -30,13 +30,13 @@ RetStatus ZzHookGOT(void *header, const char *name, zz_ptr_t replace_ptr, zz_ptr
         // normal fishhook
         ZzBuildHook((zz_ptr_t)name, target_ptr, origin_ptr, pre_call_ptr, post_call_ptr, false,
                     HOOK_TYPE_FUNCTION_via_GOT);
-        HookEntry *entry = InterceptorFindHookEntry((zz_ptr_t)name);
+        hook_entry_t *entry = InterceptorFindHookEntry((zz_ptr_t)name);
         rebind_symbols_image((void *)header, slide, (struct rebinding[1]){{name, replace_ptr, (void **)origin_ptr}}, 1);
     } else if (!strcmp(name, "objc_msgSend")) {
         // special case objc_msgSend
         ZzBuildHook((zz_ptr_t)name, target_ptr, origin_ptr, pre_call_ptr, post_call_ptr, false,
                     HOOK_TYPE_FUNCTION_via_GOT);
-        HookEntry *entry = InterceptorFindHookEntry((zz_ptr_t)name);
+        hook_entry_t *entry = InterceptorFindHookEntry((zz_ptr_t)name);
         rebind_symbols_image((void *)macho_header, slide,
                              (struct rebinding[1]){{name, entry->on_enter_trampoline, (void **)origin_ptr}}, 1);
         if (DebugLogControlerIsEnableLog()) {
@@ -46,7 +46,7 @@ RetStatus ZzHookGOT(void *header, const char *name, zz_ptr_t replace_ptr, zz_ptr
     } else {
         ZzBuildHook((zz_ptr_t)name, target_ptr, origin_ptr, pre_call_ptr, post_call_ptr, false,
                     HOOK_TYPE_FUNCTION_via_GOT);
-        HookEntry *entry = InterceptorFindHookEntry((zz_ptr_t)name);
+        hook_entry_t *entry = InterceptorFindHookEntry((zz_ptr_t)name);
         rebind_symbols_image((void *)macho_header, slide,
                              (struct rebinding[1]){{name, entry->on_enter_trampoline, (void **)origin_ptr}}, 1);
         if (DebugLogControlerIsEnableLog()) {
@@ -63,7 +63,7 @@ RetStatus ZzDisableHookGOT(const char *name) {
     zz_ptr_t target_ptr              = dlsym((void *)dlopen(0, RTLD_LAZY), name);
     const struct mach_header *header = _dyld_get_image_header(0);
     zz_size_t slide                  = pub_dyld_get_image_slide(header);
-    HookEntry *entry                 = InterceptorFindHookEntry((zz_ptr_t)name);
+    hook_entry_t *entry              = InterceptorFindHookEntry((zz_ptr_t)name);
 
     rebind_symbols_image((void *)header, slide, (struct rebinding[1]){{name, target_ptr, NULL}}, 1);
     return RS_SUCCESS;
@@ -72,9 +72,9 @@ RetStatus ZzDisableHookGOT(const char *name) {
 // RetStatus StaticBinaryInstrumentation(zz_ptr_t target_fileoff, zz_ptr_t replace_call_ptr, zz_ptr_t *origin_ptr,
 //                                      PRECALL pre_call_ptr, POSTCALL post_call_ptr) {
 //     RetStatus status                                 = RS_DONE_HOOK;
-//     ZzInterceptor *interceptor                      = g_interceptor;
+//     Interceptor *interceptor                      = g_interceptor;
 //     HookEntrySet *hook_function_entry_set = NULL;
-//     HookEntry *entry                      = NULL;
+//     hook_entry_t *entry                      = NULL;
 
 //     if (!interceptor) {
 //         InterceptorInitialize();
@@ -83,7 +83,7 @@ RetStatus ZzDisableHookGOT(const char *name) {
 //     }
 
 //     interceptor         = g_interceptor;
-//     entry               = (HookEntry *)malloc0(sizeof(HookEntry));
+//     entry               = (hook_entry_t *)malloc0(sizeof(hook_entry_t));
 //     entry->target_ptr   = target_fileoff;
 //     entry->replace_call = replace_call_ptr;
 //     entry->pre_call     = (zz_ptr_t)pre_call_ptr;
