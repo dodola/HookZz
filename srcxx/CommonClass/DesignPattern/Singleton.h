@@ -7,17 +7,21 @@
 
 #include <pthread.h>
 
-template <class T>
-class Singleton {
+template <typename T> class Singleton {
   private:
-    Singleton(){};
+    static T *_instance;
 
   public:
     static T *GetInstance();
-
-  private:
-    static T *instance_;
-    static pthread_mutex_t mutex_;
 };
+
+template <typename T> T *Singleton<T>::_instance = NULL;
+
+template <typename T> T *Singleton<T>::GetInstance() {
+    if (_instance == NULL) {
+        _instance = new T();
+    }
+    return _instance;
+}
 
 #endif //HOOKZZ_SINGLETON_H

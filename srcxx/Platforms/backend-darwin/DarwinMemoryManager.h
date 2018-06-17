@@ -7,6 +7,4 @@
 
 #include "MemoryManager.h"
 
-
-
 #endif //HOOKZZ_DARWINMEMORYMANAGER_H

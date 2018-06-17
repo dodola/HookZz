@@ -39,7 +39,7 @@ class ARM64Relocator {
 
     void doubleWrite(void *target_address);
 
-    void *registerLiteralInstCTX(ARM64InstructionCTX *instCTX);
+    void registerLiteralInstCTX(ARM64InstructionCTX *instCTX);
 
     void relocateWrite();
     void relocateWriteAll();
@@ -49,7 +49,6 @@ class ARM64Relocator {
     void rewrite_BranchCond(ARM64InstructionCTX *instCTX);
     void rewrite_B(ARM64InstructionCTX *instCTX);
     void rewrite_BL(ARM64InstructionCTX *instCTX);
-
 };
 
 #endif //HOOKZZ_ARM64RELOCATOR_H

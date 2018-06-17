@@ -5,8 +5,6 @@
 #ifndef HOOKZZ_TRAMPOLINE_H
 #define HOOKZZ_TRAMPOLINE_H
 
-class Trampoline {
-
-};
+class Trampoline {};
 
 #endif //HOOKZZ_TRAMPOLINE_H

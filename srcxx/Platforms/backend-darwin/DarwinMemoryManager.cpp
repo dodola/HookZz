@@ -7,19 +7,20 @@
 #include <errno.h>
 #include <mach-o/dyld.h>
 #include <mach/mach.h>
-#include <sys/mman.h>
 #include <mach/vm_map.h>
+#include <sys/mman.h>
 
 #include "mach_vm.h"
 
 inline void get_memory_info(void *address, vm_prot_t *prot, vm_inherit_t *inherit) {
-    vm_address_t region  = (vm_address_t)address;
+    vm_address_t region   = (vm_address_t)address;
     vm_size_t region_size = 0;
     struct vm_region_submap_short_info_64 info;
     mach_msg_type_number_t info_count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
     natural_t max_depth               = 99999;
     kern_return_t kr;
-    kr = vm_region_recurse_64(mach_task_self(), &region, &region_size, &max_depth, (vm_region_recurse_info_t)&info, &info_count);
+    kr = vm_region_recurse_64(mach_task_self(), &region, &region_size, &max_depth, (vm_region_recurse_info_t)&info,
+                              &info_count);
     if (kr != KERN_SUCCESS) {
         return;
     }
@@ -35,9 +36,11 @@ inline void set_page_memory_permission(void *address, int prot) {
     kr = mach_vm_protect(mach_task_self(), (vm_address_t)address, pageSize, FALSE, prot);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
-        return FALSE;
     }
 }
+
+int MemoryManager::PageSize() { return 0; }
+void *MemoryManager::allocateMemoryPage(MemoryAttribute prot, int n) { return NULL; }
 
 void MemoryManager::getProcessMemoryLayout() {
 
@@ -45,17 +48,17 @@ void MemoryManager::getProcessMemoryLayout() {
     struct vm_region_submap_info_64 info;
     vm_size_t nesting_depth;
 
-    kern_return_t kr         = KERN_SUCCESS;
+    kern_return_t kr     = KERN_SUCCESS;
     vm_address_t tmpAddr = 0;
-    vm_size_t tmpSize       = 0;
+    vm_size_t tmpSize    = 0;
 
-    MemoryBlock *mb = new(MemoryBlock);
+    MemoryBlock *mb = new (MemoryBlock);
     process_memory_layout.push_back(mb);
 
     while (1) {
         count = VM_REGION_SUBMAP_INFO_COUNT_64;
         kr    = vm_region_recurse_64(mach_task_self(), &tmpAddr, &tmpSize, (natural_t *)&nesting_depth,
-                                     (vm_region_info_64_t)&info, &count);
+                                  (vm_region_info_64_t)&info, &count);
         if (kr == KERN_INVALID_ADDRESS) {
             break;
         } else if (kr) {
@@ -67,9 +70,9 @@ void MemoryManager::getProcessMemoryLayout() {
             nesting_depth++;
         } else {
             tmpAddr += tmpSize;
-            mb->address =tmpAddr - tmpSize;
-            mb->size = tmpSize;
-            mb->prot = info.protection;
+            mb->address = tmpAddr - tmpSize;
+            mb->size    = tmpSize;
+            mb->prot    = info.protection;
         }
     }
 }
@@ -92,18 +95,18 @@ void MemoryManager::CodePatch(void *dest, void *src, int count) {
     vm_address_t destPage;
     vm_size_t offset;
 
-    int pageSize = this->PageSize();
+    int pageSize = PageSize();
 
     // https://www.gnu.org/software/hurd/gnumach-doc/Memory-Attributes.html
-    destPage = (zz_addr_t) dest & ~(pageSize - 1);
-    offset = (zz_addr_t) dest - destPage;
+    destPage = (zz_addr_t)dest & ~(pageSize - 1);
+    offset   = (zz_addr_t)dest - destPage;
 
     vm_prot_t prot;
     vm_inherit_t inherit;
     kern_return_t kr;
     mach_port_t task_self = mach_task_self();
 
-    get_memory_info((void *) destPage, &prot, &inherit);
+    get_memory_info((void *)destPage, &prot, &inherit);
 
     // For another method, pelease read `REF`;
     // zz_ptr_t code_mmap = mmap(NULL, range_size, PROT_READ | PROT_WRITE,
@@ -114,12 +117,12 @@ void MemoryManager::CodePatch(void *dest, void *src, int count) {
 
     void *copyPage = allocateMemoryPage(MEM_RX, 1);
 
-    kr = vm_copy(task_self, destPage, pageSize, (vm_address_t) copyPage);
+    kr = vm_copy(task_self, destPage, pageSize, (vm_address_t)copyPage);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
         return;
     }
-    memcpy(copyPage + offset, src, count);
+    memcpy((void *)((zz_addr_t)copyPage + offset), src, count);
 
     // SAME: mprotect(code_mmap, range_size, prot);
     set_page_memory_permission(copyPage, PROT_EXEC | PROT_READ);
@@ -134,20 +137,17 @@ void MemoryManager::CodePatch(void *dest, void *src, int count) {
 
     mach_vm_address_t target_address = destPage;
     vm_prot_t cur_protectionc, max_protection;
-    kr = mach_vm_remap(task_self, &target_address, pageSize, 0, VM_FLAGS_OVERWRITE, task_self, (mach_vm_address_t) copyPage,
-        /*copy*/ TRUE, &cur_protectionc, &max_protection, inherit);
+    kr = mach_vm_remap(task_self, &target_address, pageSize, 0, VM_FLAGS_OVERWRITE, task_self,
+                       (mach_vm_address_t)copyPage,
+                       /*copy*/ TRUE, &cur_protectionc, &max_protection, inherit);
 
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
-        return FALSE;
     }
     // read `REF`
     // munmap(code_mmap, range_size);
-    kr = mach_vm_deallocate(task_self, (mach_vm_address_t) copyPage, pageSize);
+    kr = mach_vm_deallocate(task_self, (mach_vm_address_t)copyPage, pageSize);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
-        return FALSE;
     }
-    return TRUE;
-
 }

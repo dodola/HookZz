@@ -40,7 +40,7 @@ typedef struct _FreeMemoryBlock {
     zz_addr_t address;
 } FreeMemoryBlock;
 
-class MemoryManager : public Singleton {
+class MemoryManager : public Singleton<MemoryManager> {
   public:
     bool is_support_rx_memory;
     std::vector<CodeCave *> code_caves;
@@ -54,8 +54,7 @@ class MemoryManager : public Singleton {
 
     static void *allocateMemoryPage(MemoryAttribute prot, int n);
 
-    void CodePatch(void *dest, void *src, int count);
-
+    static void CodePatch(void *dest, void *src, int count);
 
     CodeSlice *allocateCodeSlice(int need_size);
 

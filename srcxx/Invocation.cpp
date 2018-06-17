@@ -4,9 +4,9 @@
 
 #include "Invocation.h"
 
-#include "hookzz.h"
 #include "Interceptor.h"
 #include "StackManager.h"
+#include "hookzz.h"
 
 void context_begin_invocation(RegState *rs, HookEntry *entry, void *nextHop, void *retAddr) {
     // DEBUG_LOG("target %p call begin-invocation", entry->target_ptr);
@@ -28,7 +28,7 @@ void context_begin_invocation(RegState *rs, HookEntry *entry, void *nextHop, voi
         HookEntryInfo entryInfo;
         entryInfo.hook_id      = entry->id;
         entryInfo.hook_address = entry->target_address;
-        pre_call               = static_cast<PRECALL >(entry->pre_call);
+        pre_call               = (PRECALL)(entry->pre_call);
         (*pre_call)(rs, (ThreadStackPublic *)threadStack, (CallStackPublic *)callStack, &entryInfo);
     }
 
@@ -61,7 +61,7 @@ void context_end_invocation(RegState *rs, HookEntry *entry, void *nextHop) {
         HookEntryInfo entryInfo;
         entryInfo.hook_id      = entry->id;
         entryInfo.hook_address = entry->target_address;
-        post_call              = static_cast<POSTCALL>(entry->post_call);
+        post_call              = (POSTCALL)(entry->post_call);
         (*post_call)(rs, (ThreadStackPublic *)threadStack, (CallStackPublic *)callStack,
                      (const HookEntryInfo *)&entryInfo);
     }
@@ -78,7 +78,7 @@ void dynamic_binary_instrumentation_invocation(RegState *rs, HookEntry *entry, v
         HookEntryInfo entryInfo;
         entryInfo.hook_id      = entry->id;
         entryInfo.hook_address = entry->target_address;
-        stub_call              = static_cast<STUBCALL >(entry->stub_call);
+        stub_call              = (STUBCALL)(entry->stub_call);
         (*stub_call)(rs, (const HookEntryInfo *)&entryInfo);
     }
 

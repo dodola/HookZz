@@ -5,26 +5,25 @@
 #include "ARM64Relocator.h"
 #include <assert.h>
 
-
 ARM64Relocator::ARM64Relocator(ARM64AssemblyReader *input, ARM64AssemblerWriter *output) {
-    input = input;
+    input  = input;
     output = output;
 }
 
 void ARM64Relocator::reset() {
-    output->reset();
-    input->reset();
+    output->reset(0);
+    input->reset(0, 0);
     literalInstCTXs.clear();
     indexRelocatedInputOutput.clear();
 }
 
 void ARM64Relocator::tryRelocate(void *address, int bytes_min, int *bytes_max) {
-    int tmpSize = 0;
+    int tmpSize   = 0;
     bool earlyEnd = false;
 
     ARM64InstructionCTX *instCTX;
 
-    ARM64AssemblyReader *reader = new ARM64AssemblyReader(address);
+    ARM64AssemblyReader *reader = new ARM64AssemblyReader(address, address);
 
     do {
         instCTX = reader->readInstruction();
@@ -36,23 +35,25 @@ void ARM64Relocator::tryRelocate(void *address, int bytes_min, int *bytes_max) {
         }
         tmpSize += instCTX->size;
 
-    }while (tmpSize < bytes_min);
+    } while (tmpSize < bytes_min);
 
-    if(earlyEnd) {
+    if (earlyEnd) {
         *bytes_max = bytes_min;
     }
-    delete(reader);
+    delete (reader);
 }
 
 void ARM64Relocator::relocateTo(void *target_address) {
-    for(auto instCTX : literalInstCTXs) {
+    for (auto instCTX : literalInstCTXs) {
         zz_addr_t literal_target_address;
         literal_target_address = *(zz_addr_t *)instCTX->address;
-        if(literal_target_address > (zz_addr_t)input->start_pc && literal_target_address < ((zz_addr_t)input->start_pc + input->instBytes.size())) {
-            for(auto it : indexRelocatedInputOutput) {
+        if (literal_target_address > (zz_addr_t)input->start_pc &&
+            literal_target_address < ((zz_addr_t)input->start_pc + input->instBytes.size())) {
+            for (auto it : indexRelocatedInputOutput) {
                 ARM64InstructionCTX *inputInstCTX = input->instCTXs[it.first];
-                if(inputInstCTX->address == literal_target_address) {
-                    *(zz_addr_t *)instCTX->address = output->instCTXs[it.second]->pc - (zz_addr_t)output->start_pc + (zz_addr_t)target_address;
+                if (inputInstCTX->address == literal_target_address) {
+                    *(zz_addr_t *)instCTX->address =
+                        output->instCTXs[it.second]->pc - (zz_addr_t)output->start_pc + (zz_addr_t)target_address;
                     break;
                 }
             }
@@ -64,7 +65,7 @@ void ARM64Relocator::doubleWrite(void *target_address) {
     assert((zz_addr_t)target_address % 4 == 0);
 
     int originInstByteSize = output->instBytes.size();
-    output->reset();
+    output->reset(0);
 
     literalInstCTXs.clear();
     indexRelocatedInputOutput.clear();
@@ -75,50 +76,52 @@ void ARM64Relocator::doubleWrite(void *target_address) {
     output->putBytes(noNeedRelocateInstBuffer, originInstByteSize - output->instBytes.size());
 }
 
-void* ARM64Relocator::registerLiteralInstCTX(ARM64InstructionCTX *instCTX) {
-    literalInstCTXs.push_back(instCTX);
+void ARM64Relocator::registerLiteralInstCTX(ARM64InstructionCTX *instCTX) { literalInstCTXs.push_back(instCTX); }
+
+void ARM64Relocator::relocateWriteAll() {
+    do {
+        relocateWrite();
+    } while (indexRelocatedInputOutput.size() < input->instCTXs.size());
 }
 
 void ARM64Relocator::relocateWrite() {
     ARM64InstructionCTX *instCTX;
-    bool rewritten     = true;
+    bool rewritten = true;
 
     int doneRelocatedCount;
     doneRelocatedCount = indexRelocatedInputOutput.size();
 
-    if(input->instCTXs.size() < indexRelocatedInputOutput.size()) {
+    if (input->instCTXs.size() < indexRelocatedInputOutput.size()) {
         instCTX = input->instCTXs[doneRelocatedCount];
     } else
         return;
 
-
     switch (getInstType(instCTX->bytes)) {
-        case LoadLiteral:
-            rewrite_LoadLiteral(instCTX);
-            break;
-        case BaseCmpBranch:
-            rewrite_BaseCmpBranch(instCTX);
-            break;
-        case BranchCond:
-            rewrite_BranchCond(instCTX);
-            break;
-        case B:
-            rewrite_B(instCTX);
-            break;
-        case BL:
-            rewrite_BL(instCTX);
-            break;
+    case LoadLiteral:
+        rewrite_LoadLiteral(instCTX);
+        break;
+    case BaseCmpBranch:
+        rewrite_BaseCmpBranch(instCTX);
+        break;
+    case BranchCond:
+        rewrite_BranchCond(instCTX);
+        break;
+    case B:
+        rewrite_B(instCTX);
+        break;
+    case BL:
+        rewrite_BL(instCTX);
+        break;
 
-        default:
-            rewritten = false;
-            break;
+    default:
+        rewritten = false;
+        break;
     }
     if (!rewritten) {
         output->putBytes((void *)&instCTX->bytes, instCTX->size);
     }
 
     indexRelocatedInputOutput.insert(std::pair<int, int>(doneRelocatedCount, output->instCTXs.size()));
-
 }
 
 inline uint32_t get_insn_sub(uint32_t insn, int start, int length) { return (insn >> start) & ((1 << length) - 1); }

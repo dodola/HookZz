@@ -8,8 +8,4 @@
 #include <iostream>
 #include <vector>
 
-template <typename ItemType> class CollectionManager {
-  public:
-    std::vector<ItemType> items;
-};
 #endif //HOOKZZ_MANAGER_H

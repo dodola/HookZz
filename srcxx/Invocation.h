@@ -5,8 +5,8 @@
 #ifndef HOOKZZ_INVOCATION_H
 #define HOOKZZ_INVOCATION_H
 
-#include "hookzz.h"
 #include "Interceptor.h"
+#include "hookzz.h"
 
 void context_begin_invocation(RegState *rs, HookEntry *entry, void *nextHop, void *retAddr);
 

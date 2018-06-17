@@ -5,12 +5,12 @@
 #include "StackManager.h"
 
 ThreadStackManager::ThreadStackManager(ThreadLocalKey *key) {
-    ThreadManager *threadManager = ThreadManager::GetInstance();
+    ThreadManager *threadManager = Singleton<ThreadManager>::GetInstance();
     threadManager->setThreadLocalData(key, static_cast<void *>(this));
 }
 
 ThreadStackManager *ThreadStackManager::initializeFromThreadLocalKey(ThreadLocalKey *key) {
-    ThreadManager *threadManager    = ThreadManager::GetInstance();
+    ThreadManager *threadManager    = Singleton<ThreadManager>::GetInstance();
     ThreadStackManager *threadStack = static_cast<ThreadStackManager *>(threadManager->getThreadLocalData(key));
     return threadStack;
 }

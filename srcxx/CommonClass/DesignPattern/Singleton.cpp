@@ -4,16 +4,11 @@
 
 #include "Singleton.h"
 
-pthread_mutex_t Singleton::mutex_;
+// template <typename T> T *Singleton<T>::_instance = NULL;
 
-template <class T>
-T *Singleton::GetInstance() {
-    if (instance_ == NULL) {
-        pthread_mutex_lock(&mutex_);
-        if (instance_ == NULL) {
-            instance_ = new T();
-        }
-        pthread_mutex_unlock(&mutex_);
-    }
-    return instance_;
-}
+// template <typename T> T *Singleton<T>::GetInstance() {
+//     if (_instance == NULL) {
+//         _instance = new T();
+//     }
+//     return _instance;
+// }

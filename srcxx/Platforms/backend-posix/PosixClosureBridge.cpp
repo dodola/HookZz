@@ -9,8 +9,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-ClosureBridge::ClosureBridge() {}
-
 #define closure_bridge_trampoline_template_length (7 * 4)
 
 ClosureBridgeTrampolineTable *ClosureBridge::allocateClosureBridgeTrampolineTable() {
