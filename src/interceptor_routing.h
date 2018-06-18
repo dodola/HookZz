@@ -5,7 +5,6 @@
 #include "interceptor.h"
 
 ARCH_API void *get_ret_addr_PTR(reg_state_t *rs);
-
 ARCH_API void *get_next_hop_addr_PTR(reg_state_t *rs);
 
 void interceptor_routing_begin(reg_state_t *rs, hook_entry_t *entry, void *nextHop, void *retAddr);

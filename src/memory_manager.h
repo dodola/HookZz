@@ -38,7 +38,7 @@ typedef struct _MemoryManager {
     list_t free_memory_blocks;
 } MemoryManager, mm;
 
-#define memory_manger_class(member) cclass(memory_manager, member)
+#define memory_manger_cclass(member) cclass(memory_manager, member)
 
 PLATFORM_API static bool memory_manger_class(is_support_allocate_rx_memory)(MemoryManager *self);
 
@@ -50,7 +50,7 @@ PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *des
 
 PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *self);
 
-PLATFORM_API CodeCave *memory_manger_class(search_code_cave)(MemoryManager *self, void *address, int range, int size);
+CodeCave *memory_manger_class(search_code_cave)(MemoryManager *self, void *address, int range, int size);
 
 MemoryManager *memory_manger_class(shared_instance)();
 

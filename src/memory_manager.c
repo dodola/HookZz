@@ -49,7 +49,7 @@ inline void *search_dummy_code_cave(void *search_start, void *search_end, int si
     return NULL;
 }
 
-CodeCave *memory_manger_class(search_near_code_cave)(void *address, int range, int size) {
+CodeCave *memory_manger_class(search_code_cave)(void *address, int range, int size) {
     CodeCave *cc = NULL;
     zz_addr_t limit_start, limit_end;
     zz_addr_t search_start, search_end;

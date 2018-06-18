@@ -14,16 +14,11 @@
  *    limitations under the License.
  */
 
-#ifndef platforms_backend_darwin_memory_h
-#define platforms_backend_darwin_memory_h
+#ifndef platforms_backend_darwin_memory_manager_linux_h
+#define platforms_backend_darwin_memory_manager_linux_h
 
 #include "hookzz.h"
-#include "zkit.h"
 
-#include "memhelper.h"
-
-#include "CommonKit/memory/common_memory_kit.h"
-#include "DarwinKit/MemoryKit/darwin_memory_kit.h"
-#include "PosixKit/memory/posix_memory_kit.h"
+#include "memory_manager.h"
 
 #endif

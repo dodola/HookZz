@@ -1,20 +1,67 @@
 #include "closure-bridge-posix.h"
-#include "closurebridge.h"
-
-#include <CommonKit/log/log_kit.h>
+#include "closure_bridge.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
-extern void common_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd);
-
 #define closure_bridge_trampoline_template_length (7 * 4)
 
-static ClosureBridgeTrampolineTable *gClosureBridageTrampolineTable;
+ClosureBridge *gClosureBridge = NULL;
+ClosureBridge *ClosureBridgeCClass(SharedInstance)() {
+    if (gClosureBridge == NULL) {
+        gClosureBridge = SAFE_MALLOC_TYPE(ClosureBridge);
+    }
+    return gClosureBridge;
+}
+ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *self, void *user_data, void *user_code) {
+    ClosureBridgeInfo *cb_info;
+    ClosureBridgeTrampolineTable *table;
+    long page_size = sysconf(_SC_PAGESIZE);
 
-static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) {
+    list_iterator_t *it = list_iterator_new(self->trampoline_tables, LIST_HEAD);
+    for (int i = 0; i < self->trampoline_tables.len; i++) {
+        ClosureBridgeTrampolineTable *tmp_table = (ClosureBridgeTrampolineTable *)list_at(self->trampoline_tables, i);
+        if (tmp_table->free_count > 0) {
+            table = tmp_table;
+        }
+    }
+
+    if (!table) {
+        table = ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(self);
+    }
+
+    uint16_t trampoline_used_count = table->used_count;
+    void *redirect_trampoline =
+        (void *)((intptr_t)table->trampoline_page + closure_bridge_trampoline_template_length * trampoline_used_count);
+
+    cb_info                      = SAFE_MALLOC_TYPE(ClosureBridgeInfo);
+    cb_info->user_code           = user_code;
+    cb_info->user_data           = user_data;
+    cb_info->redirect_trampoline = redirect_trampoline;
+
+    // bind data to trampline
+    void *tmp = (void *)((intptr_t)cbi->redirect_trampoline + 4 * 3);
+    memcpy(tmp, &cbi, sizeof(ClosureBridgeInfo *));
+
+    // set trampoline to bridge
+    void *tmpX = (void *)closure_bridge_template;
+    tmp        = (void *)((intptr_t)cbi->redirect_trampoline + 4 * 5);
+    memcpy(tmp, &tmpX, sizeof(void *));
+
+    if (mprotect(table->trampoline_page, (size_t)page_size, (PROT_READ | PROT_EXEC))) {
+        // LOG-NEED
+        return NULL;
+    }
+
+    table->used_count++;
+    table->free_count--;
+
+    list_rpush(self->bridge_infos, cb_info);
+    return cb_info;
+}
+ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(ClosureBridge *self) {
     void *mmap_page;
     long page_size;
     page_size = sysconf(_SC_PAGESIZE);
@@ -22,12 +69,12 @@ static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) 
     mmap_page = mmap(0, 1, PROT_WRITE | PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
     if (mmap_page == MAP_FAILED) {
-        COMMON_ERROR_LOG();
+        // LOG-NEED
         return NULL;
     }
 
     if (mprotect(mmap_page, (size_t)page_size, (PROT_READ | PROT_WRITE))) {
-        COMMON_ERROR_LOG();
+        // LOG-NEED
         return NULL;
     }
 
@@ -35,11 +82,11 @@ static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) 
     void *copy_address = mmap_page;
     for (int i = 0; i < t; ++i) {
         copy_address = (void *)((intptr_t)mmap_page + i * closure_bridge_trampoline_template_length);
-        memcpy(copy_address, closure_bridge_trampoline_template, closure_bridge_trampoline_template_length);
+        memcpy(copy_address, (void *)closure_bridge_trampoline_template, closure_bridge_trampoline_template_length);
     }
 
     if (mprotect(mmap_page, (size_t)page_size, (PROT_READ | PROT_EXEC))) {
-        COMMON_ERROR_LOG();
+        // LOG-NEED
         return NULL;
     }
 
@@ -48,57 +95,7 @@ static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) 
     table->trampoline_page              = mmap_page;
     table->used_count                   = 0;
     table->free_count                   = (uint16_t)t;
+
+    list_rpush(self->trampoline_tables, table);
     return table;
 }
-
-static void ClosureBridgeTrampolineTableFree(ClosureBridgeTrampolineTable *table) { return; }
-
-ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code) {
-    long page_size                      = sysconf(_SC_PAGESIZE);
-    ClosureBridgeTrampolineTable *table = gClosureBridageTrampolineTable;
-    if (table == NULL || table->free_count == 0) {
-        table = ClosureBridgeTrampolineTableAllocate();
-        if (table == NULL)
-            return NULL;
-
-        table->next = gClosureBridageTrampolineTable;
-        if (table->next != NULL) {
-            table->next->prev = table;
-        }
-        gClosureBridageTrampolineTable = table;
-    }
-
-    ClosureBridgeData *bridgeData = (ClosureBridgeData *)malloc(sizeof(ClosureBridgeData));
-
-    bridgeData->user_code           = user_code;
-    bridgeData->user_data           = user_data;
-    uint16_t trampoline_used_count  = gClosureBridageTrampolineTable->used_count;
-    bridgeData->redirect_trampoline = (void *)((intptr_t)gClosureBridageTrampolineTable->trampoline_page +
-                                               closure_bridge_trampoline_template_length * trampoline_used_count);
-
-    if (mprotect(gClosureBridageTrampolineTable->trampoline_page, (size_t)page_size, (PROT_READ | PROT_WRITE))) {
-        COMMON_ERROR_LOG();
-        return NULL;
-    }
-
-    // bind data to trampline
-    void *tmp = (void *)((intptr_t)bridgeData->redirect_trampoline + 4 * 3);
-    memcpy(tmp, &bridgeData, sizeof(ClosureBridgeData *));
-
-    // set trampoline to bridge
-    void *tmpX = (void *)closure_bridge_template;
-    tmp        = (void *)((intptr_t)bridgeData->redirect_trampoline + 4 * 5);
-    memcpy(tmp, &tmpX, sizeof(void *));
-
-    if (mprotect(gClosureBridageTrampolineTable->trampoline_page, (size_t)page_size, (PROT_READ | PROT_EXEC))) {
-        COMMON_ERROR_LOG();
-        return NULL;
-    }
-
-    table->used_count++;
-    table->free_count--;
-
-    return bridgeData;
-}
-
-static void ClosureBridgeFree(ClosureBridgeData *bridgeData) { return; }

@@ -33,31 +33,31 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
     return;
 }
 
-void arm64_assembly_writer_cclass(near_patch_to)(ARM64AssemblyWriter *self, void *target_address, int range) {
-    self->start_address = target_address;
-    CodeCave *cc;
-    memory_manager_t *memory_manager;
-    memory_manager = memory_manger_class(shared_instance)();
-    cc = memory_manger_class(search_near_code_cave)(memory_manager, target_address, range, self->inst_bytes.size);
-    CHECK(cc);
-    memory_manger_class(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
-    SAFE_FREE(cc);
-    return;
-}
+// void arm64_assembly_writer_cclass(near_patch_to)(ARM64AssemblyWriter *self, void *target_address, int range) {
+//     self->start_address = target_address;
+//     CodeCave *cc;
+//     memory_manager_t *memory_manager;
+//     memory_manager = memory_manger_class(shared_instance)();
+//     cc = memory_manger_class(search_near_code_cave)(memory_manager, target_address, range, self->inst_bytes.size);
+//     CHECK(cc);
+//     memory_manger_class(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
+//     SAFE_FREE(cc);
+//     return;
+// }
 
-void arm64_assembly_writer_cclass(relocate_patch_to)(ARM64AssemblyWriter *self, void *target_address,
-                                                     ARM64Relocator *relocator) {
-    self->start_address = target_address;
-    CodeSlice *cs;
-    memory_manager_t *memory_manager;
-    memory_manager = memory_manger_class(shared_instance)();
-    cs             = memory_manger_class(allocate_code_slice)(memory_manager, self->inst_bytes->size);
-    CHECK(cs);
-    arm64_assembly_relocator_cclass(double_write)(relocator, cs->data);
-    memory_manger_class(patch_code)(memory_manager, cs->data, self->inst_bytes->data, self->inst_bytes->size);
-    SAFE_FREE(cc);
-    return;
-}
+// void arm64_assembly_writer_cclass(relocate_patch_to)(ARM64AssemblyWriter *self, void *target_address,
+//                                                      ARM64Relocator *relocator) {
+//     self->start_address = target_address;
+//     CodeSlice *cs;
+//     memory_manager_t *memory_manager;
+//     memory_manager = memory_manger_class(shared_instance)();
+//     cs             = memory_manger_class(allocate_code_slice)(memory_manager, self->inst_bytes->size);
+//     CHECK(cs);
+//     arm64_assembly_relocator_cclass(double_write)(relocator, cs->data);
+//     memory_manger_class(patch_code)(memory_manager, cs->data, self->inst_bytes->data, self->inst_bytes->size);
+//     SAFE_FREE(cc);
+//     return;
+// }
 
 void arm64_assembly_writer_cclass(put_bytes)(ARM64AssemblyWriter *self, void *data, int length) {
     ARM64InstructionCTX *instCTX = SAFE_MALLOC_TYPE(ARM64InstructionCTX);

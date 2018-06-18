@@ -10,16 +10,16 @@
 #include "std_kit/std_kit.h"
 #include "std_kit/std_list.h"
 
-typedef struct _io_index {
+typedef struct _io_index_t {
     int input_index;
     int ouput_index;
-} io_index;
+} io_index_t;
 
 typedef struct _ARM64Relocator {
     ARM64AssemblyReader *input;
     ARM64AssemblyWriter *output;
     list_t *literal_instCTXs;
-    list_t *input_output_indexs;
+    list_t *io_indexs;
 } ARM64Relocator;
 
 #define arm64_assembly_relocator_cclass(member) cclass(arm64_relocator, member)
