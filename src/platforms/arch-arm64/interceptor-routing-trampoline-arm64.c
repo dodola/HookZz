@@ -63,7 +63,7 @@ void trampoline_prepare(InterceptorBackend *self, hook_entry_t *entry) {
 // double jump
 void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t *entry) {
     char temp_codeslice[256]             = {0};
-    ARM64AssemblyrWriter *arm64_writer   = NULL;
+    ARM64AssemblyWriter *arm64_writer    = NULL;
     CodeSlice *codeslice                 = NULL;
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     RetStatus status                     = RS_SUCCESS;
@@ -173,7 +173,7 @@ void trampoline_build_for_invoke(InterceptorBackend *self, hook_entry_t *entry) 
     zz_addr_t target_addr                = (zz_addr_t)entry->target_ptr;
     zz_ptr_t restore_next_insn_addr;
     ARM64Relocator *arm64_relocator;
-    ARM64AssemblyrWriter *arm64_writer;
+    ARM64AssemblyWriter *arm64_writer;
     ARM64AssemblyReader *arm64_reader;
 
     arm64_relocator = &self->arm64_relocator;
@@ -240,7 +240,7 @@ void trampoline_active(InterceptorBackend *self, hook_entry_t *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     RetStatus status                     = RS_SUCCESS;
     zz_addr_t target_addr                = (zz_addr_t)entry->target_ptr;
-    ARM64AssemblyrWriter *arm64_writer;
+    ARM64AssemblyWriter *arm64_writer;
 
     arm64_writer = &self->arm64_writer;
     arm64_writer_reset(arm64_writer, ALIGN_CEIL(temp_codeslice, 4), target_addr);

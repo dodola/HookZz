@@ -14,67 +14,106 @@
  *    limitations under the License.
  */
 
-#ifndef platforms_arch_arm64_writer_h
-#define platforms_arch_arm64_writer_h
+#ifndef platforms_arch_arm64_writer_arm64_h
+#define platforms_arch_arm64_writer_arm64_h
 
-#include "instructions.h"
-#include "regs-arm64.h"
+#include "instruction.h"
+#include "register-arm64.h"
 #include "writer-arm64.h"
 
-#define MAX_INSN_SIZE 256
+#include "std_kit/std_buffer_array.h"
+#include "std_kit/std_list.h"
 
-typedef struct _ARM64AssemblerWriter {
-    ARM64InstructionCTX *insnCTXs[MAX_INSN_SIZE];
-    zz_size_t insnCTXs_count;
-    zz_addr_t start_pc;
-    zz_addr_t insns_buffer;
-    zz_size_t insns_size;
-} ARM64AssemblyrWriter;
+typedef struct _ARM64AssemblyWriter {
+    void *start_pc;
+    void *start_address;
 
-ARM64AssemblyrWriter *arm64_writer_new(zz_ptr_t insns_buffer);
+    list_t *instCTXs;
+    buffer_array_t *inst_bytes;
+} ARM64AssemblyWriter;
 
-void arm64_writer_init(ARM64AssemblyrWriter *self, zz_addr_t insns_buffer, zz_addr_t target_ptr);
+#define arm64_assembly_writer_cclass(member) cclass(arm64_assembly_writer, member)
 
-void arm64_writer_reset(ARM64AssemblyrWriter *self, zz_addr_t insns_buffer, zz_addr_t target_ptr);
+ARM64AssemblyWriter *arm64_assembly_writer_cclass(new)(void *pc);
+void arm64_assembly_writer_cclass(reset)(ARM64AssemblyWriter *self, void *pc);
+void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *target_address);
+void arm64_assembly_writer_cclass(near_patch_to)(ARM64AssemblyWriter *self, void *target_address, int range);
+void arm64_assembly_writer_cclass(relocate_patch_to)(ARM64AssemblyWriter *self, void *target_address,
+                                                     ARM64Relocator *relocator_arm64);
 
-void arm64_writer_free(ARM64AssemblyrWriter *self);
+inline void arm64_assembly_writer_cclass(put_bytes)(ARM64AssemblyWriter *self, void *data, int length);
 
-zz_size_t arm64_writer_near_jump_range_size();
+inline void arm64_assembly_writer_cclass(put_ldr_reg_imm)(ARM64AssemblyWriter *self, ARM64Reg reg, uint32_t offset) {
+    ARM64RegInfo ri;
+    DescribeARM64Reigster(reg, &ri);
 
-// ======= user custom =======
+    uint32_t imm19, Rt;
+    imm19         = offset >> 2;
+    Rt            = ri.index;
+    uint32_t inst = 0x58000000 | imm19 << 5 | Rt;
 
-void arm64_writer_put_ldr_br_reg_address(ARM64AssemblyrWriter *self, ARM64Reg reg, zz_addr_t address);
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+inline void arm64_assembly_writer_cclass(put_str_reg_reg_offset)(ARM64AssemblyWriter *self, ARM64Reg src_reg,
+                                                                 ARM64Reg dest_reg, uint64_t offset) {
+    ARM64RegInfo rs, rd;
+    DescribeARM64Reigster(src_reg, &rs);
+    DescribeARM64Reigster(dest_reg, &rd);
 
-void arm64_writer_put_ldr_blr_b_reg_address(ARM64AssemblyrWriter *self, ARM64Reg reg, zz_addr_t address);
+    uint32_t size, v = 0, opc = 0, Rn_ndx, Rt_ndx;
+    Rn_ndx = rd.index;
+    Rt_ndx = rs.index;
 
-void arm64_writer_put_ldr_b_reg_address(ARM64AssemblyrWriter *self, ARM64Reg reg, zz_addr_t address);
+    if (rs.isInteger) {
+        size = (rs.width == 64) ? 0b11 : 0b10;
+    }
 
-void arm64_writer_put_ldr_br_b_reg_address(ARM64AssemblyrWriter *self, ARM64Reg reg, zz_addr_t address);
+    uint32_t imm12 = offset >> size;
+    uint32_t inst  = 0x39000000 | size << 30 | opc << 22 | imm12 << 10 | Rn_ndx << 5 | Rt_ndx;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+inline void arm64_assembly_writer_cclass(put_ldr_reg_reg_offset)(ARM64AssemblyWriter *self, RM64Reg dest_reg,
+                                                                 ARM64Reg src_reg, uint64_t offset) {
+    ARM64RegInfo rs, rd;
+    DescribeARM64Reigster(src_reg, &rs);
+    DescribeARM64Reigster(dest_reg, &rd);
 
-// ======= default =======
+    uint32_t size, v = 0, opc = 0b01, Rn_ndx, Rt_ndx;
+    Rn_ndx = rs.index;
+    Rt_ndx = rd.index;
 
-void arm64_writer_put_ldr_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg reg, uint32_t offset);
+    if (rs.isInteger) {
+        size = (rs.width == 64) ? 0b11 : 0b10;
+    }
 
-void arm64_writer_put_str_reg_reg_offset(ARM64AssemblyrWriter *self, ARM64Reg src_reg, ARM64Reg dst_reg,
-                                         uint64_t offset);
+    uint32_t imm12 = offset >> size;
+    uint32_t inst  = 0x39000000 | size << 30 | opc << 22 | imm12 << 10 | Rn_ndx << 5 | Rt_ndx;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+inline void arm64_assembly_writer_cclass(put_br_reg)(ARM64AssemblyWriter *self, ARM64Reg reg) {
+    ARM64RegInfo ri;
+    DescribeARM64Reigster(reg, &ri);
 
-void arm64_writer_put_ldr_reg_reg_offset(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg src_reg,
-                                         uint64_t offset);
+    uint32_t op   = 0, Rn_ndx;
+    Rn_ndx        = ri.index;
+    uint32_t inst = 0xd61f0000 | op << 21 | Rn_ndx << 5;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+inline void arm64_assembly_writer_cclass(put_blr_reg)(ARM64AssemblyWriter *self, ARM64Reg reg) {
+    ARM64RegInfo ri;
+    DescribeARM64Reigster(reg, &ri);
 
-void arm64_writer_put_br_reg(ARM64AssemblyrWriter *self, ARM64Reg reg);
+    uint32_t op = 0b01, Rn_ndx;
 
-void arm64_writer_put_blr_reg(ARM64AssemblyrWriter *self, ARM64Reg reg);
-
-void arm64_writer_put_b_imm(ARM64AssemblyrWriter *self, uint64_t offset);
-
-void arm64_writer_put_b_cond_imm(ARM64AssemblyrWriter *self, uint32_t condition, uint64_t imm);
-
-void arm64_writer_put_add_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg, uint64_t imm);
-
-void arm64_writer_put_sub_reg_reg_imm(ARM64AssemblyrWriter *self, ARM64Reg dst_reg, ARM64Reg left_reg, uint64_t imm);
-
-void arm64_writer_put_bytes(ARM64AssemblyrWriter *self, char *data, zz_size_t size);
-
-void arm64_writer_put_instruction(ARM64AssemblyrWriter *self, uint32_t insn);
+    Rn_ndx        = ri.index;
+    uint32_t inst = 0xd63f0000 | op << 21 | Rn_ndx << 5;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+inline void arm64_assembly_writer_cclass(put_b_imm)(ARM64AssemblyWriter *self, uint64_t offset) {
+    uint32_t op   = 0b0, imm26;
+    imm26         = (offset >> 2) & 0x03ffffff;
+    uint32_t inst = 0x14000000 | op << 31 | imm26;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
 
 #endif

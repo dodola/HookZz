@@ -1,41 +1,27 @@
-#ifndef platforms_arch_arm64_reader_h
-#define platforms_arch_arm64_reader_h
-
-#include "zkit.h"
-
-#include "instructions.h"
+#ifndef platforms_arch_arm64_reader_arm64_h
+#define platforms_arch_arm64_reader_arm64_h
 
 #include "ARM64AssemblyCore.h"
+#include "core.h"
+#include "instruction.h"
 
-#include "platforms/backend-linux/memory-linux.h"
+#include "std_kit/std_buffer_array.h"
+#include "std_kit/std_kit.h"
+#include "std_kit/std_list.h"
 
-typedef enum _ARM64InsnType {
-    ARM64_INS_LDR_literal,
-    ARM64_INS_ADR,
-    ARM64_INS_ADRP,
-    ARM64_INS_B,
-    ARM64_INS_BL,
-    ARM64_INS_B_cond,
-    ARM64_UNDEF
-} ARM64InsnType;
-
-#define MAX_INSN_SIZE 256
-typedef struct _ARM64Reader {
-    ARM64InstructionCTX *insnCTXs[MAX_INSN_SIZE];
-    zz_size_t insnCTXs_count;
-    zz_addr_t start_pc;
-    zz_addr_t insns_buffer;
-    zz_size_t insns_size;
+typedef struct _ARM64AssemblyReader {
+    void *start_pc;
+    void *start_address;
+    list_t *instCTXs;
+    buffer_array_t *inst_bytes;
 } ARM64AssemblyReader;
 
-ARM64AssemblyReader *arm64_reader_new(zz_ptr_t insn_address);
+#define arm64_assembly_reader_cclass(member) cclass(arm64_assembly_reader, member)
 
-void arm64_reader_init(ARM64AssemblyReader *self, zz_ptr_t insn_address);
+ARM64AssemblyReader *arm64_assembly_reader_cclass(new)(void *address, void *pc);
 
-void arm64_reader_reset(ARM64AssemblyReader *self, zz_ptr_t insn_address);
+void arm64_assembly_reader_cclass(reset)(ARM64AssemblyReader *self, void *address, void *pc);
 
-void arm64_reader_free(ARM64AssemblyReader *self);
-
-ARM64InstructionCTX *arm64_reader_read_one_instruction(ARM64AssemblyReader *self);
+ARM64InstructionCTX *arm64_assembly_reader_cclass(read_inst)(ARM64AssemblyReader *self);
 
 #endif

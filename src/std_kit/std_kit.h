@@ -7,4 +7,11 @@ void *safe_malloc(size_t size);
 /* malloc macro */
 #define SAFE_MALLOC_TYPE(TYPE) (TYPE *)safe_malloc(sizeof(TYPE));
 
+/* safe free*/
+#define SAFE_FREE(obj)                                                                                                 \
+    do {                                                                                                               \
+        free(obj);                                                                                                     \
+        obj = NULL;                                                                                                    \
+    } while (0);
+
 #endif

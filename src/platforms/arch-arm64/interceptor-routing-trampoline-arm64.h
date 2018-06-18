@@ -25,7 +25,7 @@
 typedef struct _interceptor_backend_arm64_t {
     memory_manager_t *memory_manager;
     ARM64Relocator relocator_arm64;
-    ARM64AssemblyrWriter writer_arm64;
+    ARM64AssemblyWriter writer_arm64;
     ARM64AssemblyReader reader_arm64;
 } interceptor_backend_arm64_t;
 
