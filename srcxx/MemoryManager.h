@@ -5,13 +5,11 @@
 #ifndef HOOKZZ_MEMORYMANAGER_H
 #define HOOKZZ_MEMORYMANAGER_H
 
-#include <stdint.h>
-
 #include <iostream>
+#include <stdint.h>
 #include <vector>
 
 #include "CommonClass/DesignPattern/Singleton.h"
-
 #include "hookzz.h"
 
 typedef enum _MemoryAttribute { MEM_RX } MemoryAttribute;
@@ -34,13 +32,13 @@ typedef struct _MemoryBlock {
 } MemoryBlock;
 
 typedef struct _FreeMemoryBlock {
-    MemoryAttribute prot; // memory permission
+    int prot; // memory permission
     int total_size;
     int used_size;
     zz_addr_t address;
 } FreeMemoryBlock;
 
-class MemoryManager : public Singleton<MemoryManager> {
+class MemoryManager {
   public:
     bool is_support_rx_memory;
     std::vector<CodeCave *> code_caves;
@@ -48,19 +46,19 @@ class MemoryManager : public Singleton<MemoryManager> {
     std::vector<FreeMemoryBlock *> free_memory_blocks;
 
   public:
-    static bool isSupportRXMemory();
+    static bool IsSupportRXMemory();
 
-    static int PageSize();
+    static int GetPageSize();
 
-    static void *allocateMemoryPage(MemoryAttribute prot, int n);
+    void patchCode(void *dest, void *src, int count);
 
-    static void CodePatch(void *dest, void *src, int count);
-
-    CodeSlice *allocateCodeSlice(int need_size);
+    void *allocateMemoryPage(MemoryAttribute prot, int n);
 
     void getProcessMemoryLayout();
 
-    CodeCave *searchNearCodeCave(void *address, int range, int need_size);
+    CodeSlice *allocateCodeSlice(int size);
+
+    CodeCave *searchCodeCave(void *address, int range, int need_size);
 };
 
 #endif //HOOKZZ_MEMORYMANAGER_H

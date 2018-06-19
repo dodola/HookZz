@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logging.h"
+#include "std_kit/std_kit.h"
+
+
 /* define a macro to make abbreviation */
 #define cclass(class, member) class##_##member
 

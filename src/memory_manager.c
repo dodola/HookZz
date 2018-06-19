@@ -1,14 +1,13 @@
 #include "memory_manager.h"
-#include "std_kit/std_kit.h"
-#include "std_kit/std_log.h"
+#include "core.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* shared instance */
 memory_manager_t *g_memory_manager = NULL;
-
 memory_manager_t *memory_manager_cclass(shared_instance)() {
     if (g_memory_manager == NULL) {
         g_memory_manager = SAFE_MALLOC_TYPE(memory_manager_t);
