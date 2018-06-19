@@ -1,6 +1,9 @@
 #ifndef std_buffer_array_h
 #define std_buffer_array_h
 
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

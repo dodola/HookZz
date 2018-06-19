@@ -5,44 +5,19 @@
 #include <sys/mman.h>
 
 #include "mach_vm.h"
+#include "memory-helper-darwin.h"
+#include "memory-manager-darwin.h"
 
-inline void get_memory_info(void *address, vm_prot_t *prot, vm_inherit_t *inherit) {
-    vm_address_t region   = (vm_address_t)address;
-    vm_size_t region_size = 0;
-    struct vm_region_submap_short_info_64 info;
-    mach_msg_type_number_t info_count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
-    natural_t max_depth               = 99999;
-    kern_return_t kr;
-    kr = vm_region_recurse_64(mach_task_self(), &region, &region_size, &max_depth, (vm_region_recurse_info_t)&info,
-                              &info_count);
-    if (kr != KERN_SUCCESS) {
-        return;
-    }
-    *prot    = info.protection;
-    *inherit = info.inheritance;
-}
+PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
 
-inline void set_page_memory_permission(void *address, int prot) {
-    kern_return_t kr;
+PLATFORM_API int memory_manager_cclass(get_page_size)() { return 0x4000; }
 
-    int page_size = MemoryManager::page_size();
-
-    kr = mach_vm_protect(mach_task_self(), (vm_address_t)address, page_size, FALSE, prot);
-    if (kr != KERN_SUCCESS) {
-        // LOG-NEED
-    }
-}
-
-PLATFORM_API static bool memory_manger_class(is_support_allocate_rx_memory)(MemoryManager *self) { return true; }
-
-PLATFORM_API static int memory_manger_class(get_page_size)(MemoryManager *self) { return 0x4000; }
-
-PLATFORM_API void *memory_manger_class(allocate_page)(MemoryManager *self, int prot, int n) {
+PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
     // TODO
     return NULL;
 }
 
-PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *self) {
+PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self) {
 
     mach_msg_type_number_t count;
     struct vm_region_submap_info_64 info;
@@ -54,8 +29,8 @@ PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *
 
     while (1) {
         count = VM_REGION_SUBMAP_INFO_COUNT_64;
-        kr    = vm_region_recurse_64(mach_task_self(), &tmp_addr, &tmp_size;
-                                  , (natural_t *)&nesting_depth, (vm_region_info_64_t)&info, &count);
+        kr    = vm_region_recurse_64(mach_task_self(), &tmp_addr, &tmp_size, (natural_t *)&nesting_depth,
+                                  (vm_region_info_64_t)&info, &count);
         if (kr == KERN_INVALID_ADDRESS) {
             break;
         } else if (kr) {
@@ -67,9 +42,9 @@ PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *
             nesting_depth++;
         } else {
             MemoryBlock *mb = SAFE_MALLOC_TYPE(MemoryBlock);
-            process_memory_layout.push_back(mb);
+            list_rpush(self->process_memory_layout, (list_node_t *)mb);
             tmp_addr += tmp_size;
-            mb->address = tmp_addr - tmp_size;
+            mb->address = (void *)((zz_addr_t)tmp_addr - tmp_size);
             mb->size    = tmp_size;
             mb->prot    = info.protection;
         }
@@ -89,23 +64,23 @@ PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *
   http://shakthimaan.com/downloads/hurd/A.Programmers.Guide.to.the.Mach.System.Calls.pdf
 */
 
-PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *dest, void *src, int count) {
+PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count) {
 
     void *dest_page;
     int offset;
 
-    int page_size = memory_manger_class(get_page_size)();
+    int page_size = memory_manager_cclass(get_page_size)();
 
     // https://www.gnu.org/software/hurd/gnumach-doc/Memory-Attributes.html
-    dest_page = (zz_addr_t)dest & ~(page_size - 1);
-    offset    = (zz_addr_t)dest - dest_page;
+    dest_page = (void *)((zz_addr_t)dest & ~(page_size - 1));
+    offset    = (zz_addr_t)dest - (zz_addr_t)dest_page;
 
     vm_prot_t prot;
     vm_inherit_t inherit;
     kern_return_t kr;
     mach_port_t task_self = mach_task_self();
 
-    get_memory_info((void *)dest_page, &prot, &inherit);
+    darwin_memory_helper_cclass(get_memory_info)((void *)dest_page, &prot, &inherit);
 
     // For another method, pelease read `REF`;
 
@@ -115,9 +90,9 @@ PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *des
     //   return;
     // }
 
-    void *copy_page = memory_manger_class(allocate_page)(3, 1);
+    void *copy_page = memory_manager_cclass(allocate_page)(self, 3, 1);
 
-    kr = vm_copy(task_self, dest_page, page_size, (vm_address_t)copy_page);
+    kr = vm_copy(task_self, (vm_address_t)dest_page, page_size, (vm_address_t)copy_page);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
         return;
@@ -125,7 +100,7 @@ PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *des
     memcpy((void *)((zz_addr_t)copy_page + offset), src, count);
 
     // SAME: mprotect(code_mmap, range_size, prot);
-    set_page_memory_permission(copy_page, PROT_EXEC | PROT_READ);
+    darwin_memory_helper_cclass(set_page_memory_permission)(copy_page, PROT_EXEC | PROT_READ);
 
     // TODO: need check `memory region` again.
 
@@ -134,11 +109,11 @@ PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *des
     // // and with this, `memory region` is `rwx`
     // *(char *)0x00000001816b01a8 = 'a';
 
-    mach_vm_address_t target_address = dest_page;
-    vm_prot_t cur_protectionc, max_protection;
+    mach_vm_address_t target_address = (vm_address_t)dest_page;
+    vm_prot_t cur_protection, max_protection;
     kr = mach_vm_remap(task_self, &target_address, page_size, 0, VM_FLAGS_OVERWRITE, task_self,
                        (mach_vm_address_t)copy_page,
-                       /*copy*/ TRUE, &cur_protectionc, &max_protection, inherit);
+                       /*copy*/ TRUE, &cur_protection, &max_protection, inherit);
 
     if (kr != KERN_SUCCESS) {
         // LOG-NEED

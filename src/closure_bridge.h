@@ -2,7 +2,9 @@
 #define closure_bridge_h
 
 #include "core.h"
+#include "hookzz.h"
 #include "std_kit/std_list.h"
+
 #include <stdint.h>
 
 #define PRIVATE

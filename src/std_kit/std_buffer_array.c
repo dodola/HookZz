@@ -27,7 +27,7 @@ void buffer_array_put(buffer_array_t *self, void *data, int length) {
         self->capacity = self->capacity * 2;
         self->data     = data;
     }
-    memcopy(self->data + self->size, data, length);
+    memcpy(self->data + self->size, data, length);
 }
 
 void buffer_array_clear(buffer_array_t *self) {

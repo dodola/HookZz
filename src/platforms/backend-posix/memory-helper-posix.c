@@ -1,16 +1,20 @@
-#include "memroy-helper-posix.h"
-#include "memroy-manager-posix.h"
+#include "memory-helper-posix.h"
+#include "memory-manager-posix.h"
 
-inline void set_page_memory_permission(void *address, int prot) {
-    int page_size = memory_manger_class(get_page_size)();
+void set_page_memory_permission(void *address, int prot) {
+    int page_size = posix_memory_helper_cclass(get_page_size)();
     int r;
     r = mprotect((zz_ptr_t)address, page_size, prot);
     if (r == -1) {
         ERROR_LOG("r = %d, at (%p) error!", r, (zz_ptr_t)address);
-        return false;
+        return;
     }
-    return true;
+    return;
 }
+
+int posix_memory_helper_cclass(get_page_size)() { return 0x4000; }
+
+void *posix_memory_helper_cclass(allocate_page)(int prot, int n) { return NULL; }
 
 /*
   ref:
@@ -30,11 +34,11 @@ void posix_memory_helper_cclass(patch_code)(void *dest, void *src, int count) {
     void *dest_page;
     int offset;
 
-    int page_size = memory_manger_class(get_page_size)();
+    int page_size = posix_memory_helper_cclass(get_page_size)();
 
     // https://www.gnu.org/software/hurd/gnumach-doc/Memory-Attributes.html
-    dest_page = (zz_addr_t)dest & ~(page_size - 1);
-    offset    = (zz_addr_t)dest - dest_page;
+    dest_page = (void *)((zz_addr_t)dest & ~(page_size - 1));
+    offset    = (zz_addr_t)dest - (zz_addr_t)dest_page;
 
     // another method, pelease read `REF`;
     // zz_ptr_t code_mmap = mmap(NULL, range_size, PROT_READ | PROT_WRITE,
@@ -43,17 +47,16 @@ void posix_memory_helper_cclass(patch_code)(void *dest, void *src, int count) {
     //   return;
     // }
 
-    void *copy_page = memory_manger_class(allocate_page)(3, 1);
+    void *copy_page = posix_memory_helper_cclass(allocate_page)(3, 1);
 
     memcpy(copy_page, (void *)dest_page, page_size);
     memcpy((void *)((zz_addr_t)copy_page + offset), src, count);
 
     /* SAME: mprotect(code_mmap, range_size, prot); */
-    zz_addr_t target = (zz_addr_t)start_page_addr;
     set_page_memory_permission(copy_page, PROT_WRITE | PROT_READ);
     memcpy(dest_page, copy_page, page_size);
     set_page_memory_permission(copy_page, PROT_EXEC | PROT_READ);
     // TODO
     munmap(copy_page, page_size);
-    return true;
+    return;
 }

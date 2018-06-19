@@ -35,7 +35,7 @@ typedef struct _CallStack {
     zz_size_t size;
     zz_size_t capacity;
     zz_ptr_t reg_sp;
-    zz_ptr_t retAddr;
+    zz_ptr_t ret_addr_PTR;
     CallStackEntry *callstack_entry_list;
 } CallStack;
 

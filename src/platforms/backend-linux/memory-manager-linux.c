@@ -1,21 +1,21 @@
 #include "memory-manager-linux.h"
 #include "memory-helper-posix.h"
 
-PLATFORM_API static bool memory_manger_class(is_support_allocate_rx_memory)(MemoryManager *self) { return true; }
+PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
 
-PLATFORM_API static int memory_manger_class(get_page_size)(MemoryManager *self) { return 0x4000; }
+PLATFORM_API static int memory_manager_cclass(get_page_size)() { return 0x4000; }
 
-PLATFORM_API void *memory_manger_class(allocate_page)(MemoryManager *self, int prot, int n) {
+PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
     // TODO
     return NULL;
 }
 
-PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *dest, void *src, int count) {
+PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count) {
     posix_memory_helper_cclass(patch_code)(dest, src, count);
     return;
 }
 
-PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *self) {
+PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self) {
     char filename[64];
     char buf[256];
     FILE *fp;

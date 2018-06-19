@@ -17,6 +17,7 @@
 #ifndef platforms_backend_arm64_bridge_arm64
 #define platforms_backend_arm64_bridge_arm64
 
+#include "closure_bridge.h"
 #include "memory_manager.h"
 
 #endif

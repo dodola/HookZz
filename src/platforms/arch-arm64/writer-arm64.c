@@ -12,8 +12,10 @@ ARM64AssemblyWriter *arm64_assembly_writer_cclass(new)(void *pc) {
     writer->start_pc            = pc;
     writer->instCTXs            = list_new();
     writer->inst_bytes          = buffer_array_create(64);
-    return;
+    return writer;
 }
+
+void arm64_assembly_writer_cclass(destory)(ARM64AssemblyWriter *self) {}
 
 void arm64_assembly_writer_cclass(reset)(ARM64AssemblyWriter *self, void *pc) {
     self->start_pc = pc;
@@ -28,8 +30,8 @@ void arm64_assembly_writer_cclass(reset)(ARM64AssemblyWriter *self, void *pc) {
 void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *target_address) {
     self->start_address = target_address;
     memory_manager_t *memory_manager;
-    memory_manager = memory_manger_class(shared_instance)();
-    memory_manger_class(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
+    memory_manager = memory_manager_cclass(shared_instance)();
+    memory_manager_cclass(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
     return;
 }
 
@@ -37,10 +39,10 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
 //     self->start_address = target_address;
 //     CodeCave *cc;
 //     memory_manager_t *memory_manager;
-//     memory_manager = memory_manger_class(shared_instance)();
-//     cc = memory_manger_class(search_near_code_cave)(memory_manager, target_address, range, self->inst_bytes.size);
+//     memory_manager = memory_manager_cclass(shared_instance)();
+//     cc = memory_manager_cclass(search_near_code_cave)(memory_manager, target_address, range, self->inst_bytes->size);
 //     CHECK(cc);
-//     memory_manger_class(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
+//     memory_manager_cclass(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
 //     SAFE_FREE(cc);
 //     return;
 // }
@@ -50,11 +52,11 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
 //     self->start_address = target_address;
 //     CodeSlice *cs;
 //     memory_manager_t *memory_manager;
-//     memory_manager = memory_manger_class(shared_instance)();
-//     cs             = memory_manger_class(allocate_code_slice)(memory_manager, self->inst_bytes->size);
+//     memory_manager = memory_manager_cclass(shared_instance)();
+//     cs             = memory_manager_cclass(allocate_code_slice)(memory_manager, self->inst_bytes->size);
 //     CHECK(cs);
 //     arm64_assembly_relocator_cclass(double_write)(relocator, cs->data);
-//     memory_manger_class(patch_code)(memory_manager, cs->data, self->inst_bytes->data, self->inst_bytes->size);
+//     memory_manager_cclass(patch_code)(memory_manager, cs->data, self->inst_bytes->data, self->inst_bytes->size);
 //     SAFE_FREE(cc);
 //     return;
 // }
@@ -70,4 +72,77 @@ void arm64_assembly_writer_cclass(put_bytes)(ARM64AssemblyWriter *self, void *da
     buffer_array_put(self->inst_bytes, (void *)instCTX->address, 4);
 
     list_rpush(self->instCTXs, (list_node_t *)instCTX);
+}
+
+void arm64_assembly_writer_cclass(put_ldr_reg_imm)(ARM64AssemblyWriter *self, ARM64Reg reg, uint32_t offset) {
+    ARM64RegInfo ri;
+    arm64_register_describe(reg, &ri);
+
+    uint32_t imm19, Rt;
+    imm19         = offset >> 2;
+    Rt            = ri.index;
+    uint32_t inst = 0x58000000 | imm19 << 5 | Rt;
+
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+void arm64_assembly_writer_cclass(put_str_reg_reg_offset)(ARM64AssemblyWriter *self, ARM64Reg src_reg,
+                                                          ARM64Reg dest_reg, uint64_t offset) {
+    ARM64RegInfo rs, rd;
+    arm64_register_describe(src_reg, &rs);
+    arm64_register_describe(dest_reg, &rd);
+
+    uint32_t size, v = 0, opc = 0, Rn_ndx, Rt_ndx;
+    Rn_ndx = rd.index;
+    Rt_ndx = rs.index;
+
+    if (rs.is_integer) {
+        size = (rs.width == 64) ? 0b11 : 0b10;
+    }
+
+    uint32_t imm12 = offset >> size;
+    uint32_t inst  = 0x39000000 | size << 30 | opc << 22 | imm12 << 10 | Rn_ndx << 5 | Rt_ndx;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+void arm64_assembly_writer_cclass(put_ldr_reg_reg_offset)(ARM64AssemblyWriter *self, ARM64Reg dest_reg,
+                                                          ARM64Reg src_reg, uint64_t offset) {
+    ARM64RegInfo rs, rd;
+    arm64_register_describe(src_reg, &rs);
+    arm64_register_describe(dest_reg, &rd);
+
+    uint32_t size, v = 0, opc = 0b01, Rn_ndx, Rt_ndx;
+    Rn_ndx = rs.index;
+    Rt_ndx = rd.index;
+
+    if (rs.is_integer) {
+        size = (rs.width == 64) ? 0b11 : 0b10;
+    }
+
+    uint32_t imm12 = offset >> size;
+    uint32_t inst  = 0x39000000 | size << 30 | opc << 22 | imm12 << 10 | Rn_ndx << 5 | Rt_ndx;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+void arm64_assembly_writer_cclass(put_br_reg)(ARM64AssemblyWriter *self, ARM64Reg reg) {
+    ARM64RegInfo ri;
+    arm64_register_describe(reg, &ri);
+
+    uint32_t op   = 0, Rn_ndx;
+    Rn_ndx        = ri.index;
+    uint32_t inst = 0xd61f0000 | op << 21 | Rn_ndx << 5;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+void arm64_assembly_writer_cclass(put_blr_reg)(ARM64AssemblyWriter *self, ARM64Reg reg) {
+    ARM64RegInfo ri;
+    arm64_register_describe(reg, &ri);
+
+    uint32_t op = 0b01, Rn_ndx;
+
+    Rn_ndx        = ri.index;
+    uint32_t inst = 0xd63f0000 | op << 21 | Rn_ndx << 5;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
+}
+void arm64_assembly_writer_cclass(put_b_imm)(ARM64AssemblyWriter *self, uint64_t offset) {
+    uint32_t op   = 0b0, imm26;
+    imm26         = (offset >> 2) & 0x03ffffff;
+    uint32_t inst = 0x14000000 | op << 31 | imm26;
+    arm64_assembly_writer_cclass(put_bytes)(self, (void *)&inst, 4);
 }

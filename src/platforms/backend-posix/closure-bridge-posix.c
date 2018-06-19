@@ -21,7 +21,7 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
     long page_size = sysconf(_SC_PAGESIZE);
 
     list_iterator_t *it = list_iterator_new(self->trampoline_tables, LIST_HEAD);
-    for (int i = 0; i < self->trampoline_tables.len; i++) {
+    for (int i = 0; i < self->trampoline_tables->len; i++) {
         ClosureBridgeTrampolineTable *tmp_table = (ClosureBridgeTrampolineTable *)list_at(self->trampoline_tables, i);
         if (tmp_table->free_count > 0) {
             table = tmp_table;
@@ -42,12 +42,12 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
     cb_info->redirect_trampoline = redirect_trampoline;
 
     // bind data to trampline
-    void *tmp = (void *)((intptr_t)cbi->redirect_trampoline + 4 * 3);
-    memcpy(tmp, &cbi, sizeof(ClosureBridgeInfo *));
+    void *tmp = (void *)((intptr_t)cb_info->redirect_trampoline + 4 * 3);
+    memcpy(tmp, &cb_info, sizeof(ClosureBridgeInfo *));
 
     // set trampoline to bridge
     void *tmpX = (void *)closure_bridge_template;
-    tmp        = (void *)((intptr_t)cbi->redirect_trampoline + 4 * 5);
+    tmp        = (void *)((intptr_t)cb_info->redirect_trampoline + 4 * 5);
     memcpy(tmp, &tmpX, sizeof(void *));
 
     if (mprotect(table->trampoline_page, (size_t)page_size, (PROT_READ | PROT_EXEC))) {
@@ -58,7 +58,7 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
     table->used_count++;
     table->free_count--;
 
-    list_rpush(self->bridge_infos, cb_info);
+    list_rpush(self->bridge_infos, (list_node_t *)cb_info);
     return cb_info;
 }
 ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(ClosureBridge *self) {
@@ -96,6 +96,6 @@ ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolin
     table->used_count                   = 0;
     table->free_count                   = (uint16_t)t;
 
-    list_rpush(self->trampoline_tables, table);
+    list_rpush(self->trampoline_tables, (list_node_t *)table);
     return table;
 }

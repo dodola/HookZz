@@ -31,29 +31,29 @@ typedef struct _FreeMemoryBlock {
     void *address;
 } FreeMemoryBlock;
 
-typedef struct _MemoryManager {
+typedef struct _memory_manager_t {
     bool is_support_rx_memory;
-    list_t code_caves;
-    list_t process_memory_layout;
-    list_t free_memory_blocks;
-} MemoryManager, mm;
+    list_t *code_caves;
+    list_t *process_memory_layout;
+    list_t *free_memory_blocks;
+} memory_manager_t;
 
-#define memory_manger_cclass(member) cclass(memory_manager, member)
+#define memory_manager_cclass(member) cclass(memory_manager, member)
 
-PLATFORM_API static bool memory_manger_class(is_support_allocate_rx_memory)(MemoryManager *self);
+PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
 
-PLATFORM_API static int memory_manger_class(get_page_size)(MemoryManager *self);
+PLATFORM_API int memory_manager_cclass(get_page_size)();
 
-PLATFORM_API void *memory_manger_class(allocate_page)(MemoryManager *self, int prot, int n);
+PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n);
 
-PLATFORM_API void memory_manger_class(patch_code)(MemoryManager *self, void *dest, void *src, int count);
+PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count);
 
-PLATFORM_API void memory_manger_class(get_process_memory_layout)(MemoryManager *self);
+PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self);
 
-CodeCave *memory_manger_class(search_code_cave)(MemoryManager *self, void *address, int range, int size);
+CodeCave *memory_manager_cclass(search_code_cave)(memory_manager_t *self, void *address, int range, int size);
 
-MemoryManager *memory_manger_class(shared_instance)();
+memory_manager_t *memory_manager_cclass(shared_instance)();
 
-CodeSlice *memory_manger_class(allocate_code_slice)(MemoryManager *self, int size);
+CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, int size);
 
 #endif

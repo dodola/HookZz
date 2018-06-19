@@ -29,7 +29,7 @@ typedef struct _ARMRelocator {
     int doneRelocateInputCount;
 
     // memory patch can't confirm the code slice length, so last setp of memory patch need repair the literal instruction.
-    ARMInstruction *literal_insnCTXs[MAX_INSN_SIZE];
+    ARMInstruction *literal_instCTXs[MAX_INSN_SIZE];
     zz_size_t literal_insnCTXs_count;
 
     // record for every instruction need to be relocated

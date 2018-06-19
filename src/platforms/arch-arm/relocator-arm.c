@@ -104,7 +104,7 @@ void arm_relocator_relocate_writer(ARMRelocator *relocator, zz_addr_t final_relo
     if (relocator->literal_insnCTXs_count) {
         zz_addr_t *literal_target_address_ptr;
         for (int i = 0; i < relocator->literal_insnCTXs_count; i++) {
-            literal_target_address_ptr = (zz_addr_t *)relocator->literal_insnCTXs[i]->address;
+            literal_target_address_ptr = (zz_addr_t *)relocator->literal_instCTXs[i]->address;
             // literal instruction in the range of instructions-need-fix
             if (*literal_target_address_ptr > (relocator->input->start_pc - 8) &&
                 *literal_target_address_ptr < (relocator->input->start_pc - 8 + relocator->input->insns_size)) {
@@ -127,7 +127,7 @@ void arm_relocator_write_all(ARMRelocator *self) {
 }
 
 void arm_relocator_register_literal_insn(ARMRelocator *self, ARMInstruction *insn_ctx) {
-    self->literal_insnCTXs[self->literal_insnCTXs_count++] = insn_ctx;
+    self->literal_instCTXs[self->literal_insnCTXs_count++] = insn_ctx;
     // convert the temportary absolute address with offset.
     //    zz_addr_t *temp_address = (zz_addr_t  *)insn_ctx->address;
     //    *temp_address = insn_ctx->pc - self->output->start_pc;

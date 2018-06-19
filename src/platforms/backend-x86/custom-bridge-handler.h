@@ -10,9 +10,8 @@
 #include "interceptor.h"
 #include "zkit.h"
 
-
-void context_end_invocation_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd);
-void context_begin_invocation_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd);
-void dynamic_binary_instrumentationn_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd);
+void context_end_invocation_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info);
+void context_begin_invocation_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info);
+void dynamic_binary_instrumentationn_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info);
 
 #endif //CUSTOM_BRIDGE_HANDLER_H

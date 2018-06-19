@@ -11,12 +11,12 @@
 
 static ClosureBridgeTrampolineTable *gClosureBridageTrampolineTable;
 
-void common_bridge_handler(reg_state_t *rs, ClosureBridgeData *cbd) {
+void common_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info) {
 
-    USER_CODE_CALL userCodeCall = cbd->user_code;
+    USER_CODE_CALL userCodeCall = cb_info->user_code;
     // printf("CommonBridgeHandler:");
-    // printf("\tTrampoline Address: %p", cbd->redirect_trampoline);
-    userCodeCall(rs, cbd);
+    // printf("\tTrampoline Address: %p", cb_info->redirect_trampoline);
+    userCodeCall(rs, cb_info);
     // set return address
     rs->general.r[12] = rs->general.r[12];
     return;
@@ -61,7 +61,7 @@ static ClosureBridgeTrampolineTable *ClosureBridgeTrampolineTableAllocate(void) 
 
 static void ClosureBridgeTrampolineTableFree(ClosureBridgeTrampolineTable *table) { return; }
 
-ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code) {
+ClosureBridgeInfo *ClosureBridgeAllocate(void *user_data, void *user_code) {
     long page_size                      = sysconf(_SC_PAGESIZE);
     ClosureBridgeTrampolineTable *table = gClosureBridageTrampolineTable;
     if (table == NULL || table->free_count == 0) {
@@ -76,7 +76,7 @@ ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code) {
         gClosureBridageTrampolineTable = table;
     }
 
-    ClosureBridgeData *bridgeData = (ClosureBridgeData *)malloc(sizeof(ClosureBridgeData));
+    ClosureBridgeInfo *bridgeData = (ClosureBridgeInfo *)malloc(sizeof(ClosureBridgeInfo));
 
     bridgeData->user_code           = user_code;
     bridgeData->user_data           = user_data;
@@ -91,7 +91,7 @@ ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code) {
 
     // bind data to trampline
     void *tmp = (void *)((intptr_t)bridgeData->redirect_trampoline + 4 * 2);
-    memcpy(tmp, &bridgeData, sizeof(ClosureBridgeData *));
+    memcpy(tmp, &bridgeData, sizeof(ClosureBridgeInfo *));
 
     // set trampoline to bridge
     void *tmpX = (void *)closure_bridge_template;
@@ -109,4 +109,4 @@ ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code) {
     return bridgeData;
 }
 
-static void ClosureBridgeFree(ClosureBridgeData *bridgeData) { return; }
+static void ClosureBridgeFree(ClosureBridgeInfo *bridgeData) { return; }

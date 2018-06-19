@@ -23,11 +23,11 @@ void list_destroy(list_t *self) {
         next = curr->next;
         if (self->free)
             self->free(curr->val);
-        LIST_FREE(curr);
+        free(curr);
         curr = next;
     }
 
-    LIST_FREE(self);
+    free(self);
 }
 
 list_node_t *list_rpush(list_t *self, list_node_t *node) {
@@ -148,7 +148,7 @@ void list_remove(list_t *self, list_node_t *node) {
     if (self->free)
         self->free(node->val);
 
-    LIST_FREE(node);
+    free(node);
     --self->len;
 }
 
@@ -187,6 +187,6 @@ list_node_t *list_iterator_next(list_iterator_t *self) {
 }
 
 void list_iterator_destroy(list_iterator_t *self) {
-    LIST_FREE(self);
+    free(self);
     self = NULL;
 }

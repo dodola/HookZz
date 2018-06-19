@@ -58,7 +58,7 @@ typedef struct _RegState {
             FPReg q0, q1, q2, q3, q4, q5, q6, q7;
         } regs;
     } floating;
-} reg_state_t;
+} RegState;
 #elif defined(__arm__)
 typedef struct _RegState {
     uint32_t sp;
@@ -71,13 +71,13 @@ typedef struct _RegState {
     } general;
 
     uint32_t lr;
-} reg_state_t;
+} RegState;
 #elif defined(__i386__)
 typedef struct _RegState {
-} reg_state_t;
+} RegState;
 #elif defined(__x86_64__)
 typedef struct _RegState {
-} reg_state_t;
+} RegState;
 #endif
 #endif
 
@@ -85,7 +85,7 @@ typedef struct _ClosureBridgeData {
     void *user_code;
     void *user_data;
     void *redirect_trampoline;
-} ClosureBridgeData;
+} ClosureBridgeInfo;
 
 typedef struct _ClosureBridgeTrampolineTable {
     void *entry;
@@ -97,9 +97,9 @@ typedef struct _ClosureBridgeTrampolineTable {
     struct _ClosureBridgeTrampolineTable *next;
 } ClosureBridgeTrampolineTable;
 
-typedef void (*USER_CODE_CALL)(reg_state_t *rs, ClosureBridgeData *cbd);
+typedef void (*USER_CODE_CALL)(RegState *rs, ClosureBridgeInfo *cb_info);
 
-ClosureBridgeData *ClosureBridgeAllocate(void *user_data, void *user_code);
+ClosureBridgeInfo *ClosureBridgeAllocate(void *user_data, void *user_code);
 
 void closure_bridge_trampoline_template();
 void closure_bridge_template();

@@ -4,16 +4,15 @@
 #include "hookzz.h"
 #include "zkit.h"
 
-#include "memory.h"
 #include "interceptor.h"
-
+#include "memory.h"
 
 #include "platforms/arch-arm/relocator-arm.h"
 #include "platforms/arch-arm/relocator-thumb.h"
 #include "platforms/arch-arm/writer-arm.h"
 #include "platforms/arch-arm/writer-thumb.h"
 
-// (nextHop + general_regs + sp)
+// (next_hop_addr_PTR + general_regs + sp)
 #define CTX_SAVE_STACK_OFFSET (4 * 14)
 
 typedef struct _InterceptorBackend {

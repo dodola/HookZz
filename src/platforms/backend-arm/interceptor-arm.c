@@ -15,7 +15,7 @@ InterceptorBackend *InteceptorBackendNew(ExecuteMemoryManager *emm) {
         return NULL;
     }
 
-    RetStatus status;
+    ret_status_t status;
     InterceptorBackend *backend = (InterceptorBackend *)malloc0(sizeof(InterceptorBackend));
 
     arm_writer_init(&backend->arm_writer, 0, 0);
@@ -33,7 +33,7 @@ InterceptorBackend *InteceptorBackendNew(ExecuteMemoryManager *emm) {
 
     if (DebugLogControlerIsEnableLog()) {
         char buffer[1024] = {};
-        sprintf(buffer + strlen(buffer), "\n======= Global Interceptor Info ======= \n");
+        sprintf(buffer + strlen(buffer), "\n======= Global interceptor_t Info ======= \n");
         sprintf(buffer + strlen(buffer), "\tenter_bridge: %p\n", backend->enter_bridge);
         sprintf(buffer + strlen(buffer), "\tleave_bridge: %p\n", backend->leave_bridge);
         sprintf(buffer + strlen(buffer), "\tdynamic_binary_instrumentation_bridge: %p\n",
@@ -127,7 +127,7 @@ void trampoline_prepare(InterceptorBackend *self, hook_entry_t *entry) {
 
     // save original prologue
     memcpy(entry->origin_prologue.data, (zz_ptr_t)target_addr, entry_backend->redirect_code_size);
-    entry->origin_prologue.size    = entry_backend->redirect_code_size;
+    entry->origin_prologue->size   = entry_backend->redirect_code_size;
     entry->origin_prologue.address = (zz_ptr_t)target_addr;
 
     // relocator initialize
@@ -142,7 +142,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
     ARMAssemblerWriter *thumb_writer   = NULL;
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    RetStatus status                   = RS_SUCCESS;
+    ret_status_t status                = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
 
@@ -225,12 +225,12 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
 
 void trampoline_build_for_enter(InterceptorBackend *self, hook_entry_t *entry) {
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    RetStatus status                   = RS_SUCCESS;
+    ret_status_t status                = RS_SUCCESS;
     bool is_thumb;
 
     is_thumb = INSTRUCTION_IS_THUMB((zz_addr_t)entry->target_ptr);
 
-    ClosureBridgeData *bridgeData;
+    ClosureBridgeInfo *bridgeData;
 
     bridgeData = ClosureBridgeAllocate(entry, context_begin_invocation_bridge_handler);
     if (bridgeData == NULL) {
@@ -264,12 +264,12 @@ void trampoline_build_for_enter(InterceptorBackend *self, hook_entry_t *entry) {
 
 void trampoline_build_for_dynamic_binary_instrumentation(InterceptorBackend *self, hook_entry_t *entry) {
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    RetStatus status                   = RS_SUCCESS;
+    ret_status_t status                = RS_SUCCESS;
     bool is_thumb;
 
     is_thumb = INSTRUCTION_IS_THUMB((zz_addr_t)entry->target_ptr);
 
-    ClosureBridgeData *bridgeData;
+    ClosureBridgeInfo *bridgeData;
 
     bridgeData = ClosureBridgeAllocate(entry, context_begin_invocation_bridge_handler);
     if (bridgeData == NULL) {
@@ -305,7 +305,7 @@ void trampoline_build_for_invoke(InterceptorBackend *self, hook_entry_t *entry) 
     char temp_codeslice[256]           = {0};
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    RetStatus status                   = RS_SUCCESS;
+    ret_status_t status                = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
     zz_ptr_t restore_next_insn_addr;
@@ -435,7 +435,7 @@ void trampoline_build_for_invoke(InterceptorBackend *self, hook_entry_t *entry) 
 }
 
 void trampoline_build_for_leave(InterceptorBackend *self, hook_entry_t *entry) {
-    ClosureBridgeData *bridgeData;
+    ClosureBridgeInfo *bridgeData;
 
     bridgeData = ClosureBridgeAllocate(entry, context_end_invocation_bridge_handler);
     if (bridgeData == NULL) {
@@ -462,7 +462,7 @@ void trampoline_active(InterceptorBackend *self, hook_entry_t *entry) {
     char temp_codeslice[256]           = {0};
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    RetStatus status                   = RS_SUCCESS;
+    ret_status_t status                = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
 

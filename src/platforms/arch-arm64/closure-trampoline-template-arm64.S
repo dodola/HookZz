@@ -22,7 +22,7 @@ cdecl(closure_bridge_trampoline_template):
 #if 0
 .globl cdecl(closure_bridge_template)
 cdecl(closure_bridge_template):
-    // ======= reg_state_t Save =======
+    // ======= RegState Save =======
 
     // save {q0-q7}
     sub sp, sp, #(8*16)
@@ -68,12 +68,12 @@ cdecl(closure_bridge_template):
 
     // prepare args
     // @x0: data_address
-    // @x1: reg_state_t stack address
+    // @x1: RegState stack address
     mov x0, sp
     mov x1, x14
     bl cdecl(common_bridge_handler)
 
-    // ======= reg_state_t Restore =======
+    // ======= RegState Restore =======
     // restore x0
     ldr x0, [sp, #8]
     add sp, sp, #(2*8)

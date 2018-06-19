@@ -12,7 +12,7 @@
 
 typedef struct _io_index_t {
     int input_index;
-    int ouput_index;
+    int output_index;
 } io_index_t;
 
 typedef struct _ARM64Relocator {
@@ -24,8 +24,7 @@ typedef struct _ARM64Relocator {
 
 #define arm64_assembly_relocator_cclass(member) cclass(arm64_relocator, member)
 
-ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64Relocator *self, ARM64AssemblyReader *input,
-                                                     ARM64AssemblyWriter *output);
+ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64AssemblyReader *input, ARM64AssemblyWriter *output);
 
 void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self);
 

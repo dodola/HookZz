@@ -2,25 +2,26 @@
 #include "std_kit/std_kit.h"
 #include "std_kit/std_log.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-MemoryManager *g_mm = NULL;
+memory_manager_t *g_memory_manager = NULL;
 
-MemoryManager *memory_manger_class(shared_instance)() {
-    if (g_mm == NULL) {
-        g_mm = safe_malloc();
-        CHECK(g_mm != NULL);
+memory_manager_t *memory_manager_cclass(shared_instance)() {
+    if (g_memory_manager == NULL) {
+        g_memory_manager = SAFE_MALLOC_TYPE(memory_manager_t);
+        CHECK(g_memory_manager != NULL);
     }
-    return g_mm;
+    return g_memory_manager;
 }
 
-void *memory_manger_class(allocate_code_slice)(MemoryManager *self, int size) {
+CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, int size) {
     CodeSlice *cs       = NULL;
     list_iterator_t *it = list_iterator_new(self->free_memory_blocks, LIST_HEAD);
     for (int i = 0; i < self->free_memory_blocks->len; i++) {
-        FreeMemoryBlock *fmb = (FreeMemoryBlock *)list_at(free_memory_blocks, i);
+        FreeMemoryBlock *fmb = (FreeMemoryBlock *)list_at(self->free_memory_blocks, i);
         if ((fmb->total_size - fmb->used_size) > size) {
             cs       = SAFE_MALLOC_TYPE(CodeSlice);
             cs->data = (void *)(fmb->address + fmb->used_size);
@@ -30,9 +31,10 @@ void *memory_manger_class(allocate_code_slice)(MemoryManager *self, int size) {
             return cs;
         }
     }
+    return NULL;
 }
 
-inline void *search_dummy_code_cave(void *search_start, void *search_end, int size) {
+void *search_dummy_code_cave(zz_addr_t search_start, zz_addr_t search_end, int size) {
     assert(search_start);
     assert(search_start < search_end);
 
@@ -49,21 +51,23 @@ inline void *search_dummy_code_cave(void *search_start, void *search_end, int si
     return NULL;
 }
 
-CodeCave *memory_manger_class(search_code_cave)(void *address, int range, int size) {
+CodeCave *memory_manager_cclass(search_code_cave)(memory_manager_t *self, void *address, int range, int size) {
     CodeCave *cc = NULL;
     zz_addr_t limit_start, limit_end;
     zz_addr_t search_start, search_end;
 
-    limit_start = (zz_addr_t)address - range;
-    limit_start = (zz_addr_t)address + range - size;
-    for (auto mb : process_memory_layout) {
-        search_start = mb->address > limit_start ? mb->address : limit_start;
-        search_end   = (mb->address + mb->size) < limit_end ? (mb->address + mb->size) : limit_end;
-        void *p      = search_dummy_code_cave(search_start, search_end, size);
+    limit_start         = (zz_addr_t)address - range;
+    limit_start         = (zz_addr_t)address + range - size;
+    list_iterator_t *it = list_iterator_new(self->free_memory_blocks, LIST_HEAD);
+    for (int i = 0; i < self->process_memory_layout->len; i++) {
+        MemoryBlock *mb = (MemoryBlock *)list_at(self->process_memory_layout, i);
+        search_start    = (zz_addr_t)mb->address > limit_start ? (zz_addr_t)mb->address : limit_start;
+        search_end = ((zz_addr_t)mb->address + mb->size) < limit_end ? ((zz_addr_t)mb->address + mb->size) : limit_end;
+        void *p    = search_dummy_code_cave(search_start, search_end, size);
         if (p) {
             cc          = SAFE_MALLOC_TYPE(CodeCave);
             cc->size    = size;
-            cc->address = (zz_addr_t)p;
+            cc->address = p;
             return cc;
         }
     }

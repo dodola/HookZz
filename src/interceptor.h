@@ -46,7 +46,7 @@ struct _interceptor_backend_t;
 
 typedef struct _interceptor_t {
     bool is_support_rx_memory;
-    list_t hook_entries;
+    list_t *hook_entries;
     struct _interceptor_backend_t *interceptor_backend;
     memory_manager_t *memory_manager;
 } interceptor_t;
@@ -55,7 +55,7 @@ typedef struct _interceptor_t {
 
 interceptor_t *interceptor_cclass(shared_instance)(void);
 
-hook_entry_t *interceptor_cclass(find_hook_entry)(interceptor_t *self);
+hook_entry_t *interceptor_cclass(find_hook_entry)(interceptor_t *self, void *target_address);
 
 void interceptor_cclass(add_hook_entry)(interceptor_t *self, hook_entry_t *entry);
 

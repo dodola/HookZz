@@ -1,6 +1,10 @@
 #ifndef STD_LIST_H
 #define STD_LIST_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
