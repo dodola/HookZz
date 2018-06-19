@@ -25,8 +25,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-    typedef uintptr_t zz_addr_t;
-    typedef void * zz_ptr_t;
+typedef uintptr_t zz_addr_t;
+typedef void * zz_ptr_t;
 
 #ifndef REGISTER_STATE_STRUCT
 #define REGISTER_STATE_STRUCT
@@ -156,7 +156,8 @@ typedef void (*STUBCALL)(RegState *rs, const HookEntryInfo *info);
 void *CallStackGetThreadLocalData(CallStackPublic *callstack_ptr, char *key_str);
 bool CallStackSetThreadLocalData(CallStackPublic *callstack_ptr, char *key_str, void *value_ptr, unsigned long value_size);
 
-RetStatus ZzHook(void *target_ptr, void *replace_call, void **origin_call_ptr, PRECALL pre_call_ptr, POSTCALL post_call_ptr, bool try_near_jump);
+RetStatus ZzHook(void *target_address, void *replace_call, void **origin_call, PRECALL pre_call,
+                    POSTCALL post_call) ;
 RetStatus ZzHookPrePost(void *target_ptr, PRECALL pre_call_ptr, POSTCALL post_call_ptr);
 RetStatus ZzHookReplace(void *target_ptr, void *replace_call, void **origin_call_ptr);
 
@@ -171,9 +172,6 @@ RetStatus ZzDynamicBinaryInstrumentation(void *address, STUBCALL stub_call_ptr);
 
 // runtime code patch
 RetStatus ZzRuntimeCodePatch(void *address, void *code_data, unsigned long code_length);
-
-// enable debug info
-void DebugLogControlerEnableLog();
 
 // disable hook
 RetStatus ZzDisableHook(void *target_ptr);

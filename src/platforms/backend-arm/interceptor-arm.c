@@ -15,7 +15,7 @@ InterceptorBackend *InteceptorBackendNew(ExecuteMemoryManager *emm) {
         return NULL;
     }
 
-    ret_status_t status;
+    RetStatus status;
     InterceptorBackend *backend = (InterceptorBackend *)malloc0(sizeof(InterceptorBackend));
 
     arm_writer_init(&backend->arm_writer, 0, 0);
@@ -142,7 +142,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
     ARMAssemblerWriter *thumb_writer   = NULL;
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    ret_status_t status                = RS_SUCCESS;
+    RetStatus status                   = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
 
@@ -225,7 +225,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
 
 void trampoline_build_for_enter(InterceptorBackend *self, hook_entry_t *entry) {
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    ret_status_t status                = RS_SUCCESS;
+    RetStatus status                   = RS_SUCCESS;
     bool is_thumb;
 
     is_thumb = INSTRUCTION_IS_THUMB((zz_addr_t)entry->target_ptr);
@@ -264,7 +264,7 @@ void trampoline_build_for_enter(InterceptorBackend *self, hook_entry_t *entry) {
 
 void trampoline_build_for_dynamic_binary_instrumentation(InterceptorBackend *self, hook_entry_t *entry) {
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    ret_status_t status                = RS_SUCCESS;
+    RetStatus status                   = RS_SUCCESS;
     bool is_thumb;
 
     is_thumb = INSTRUCTION_IS_THUMB((zz_addr_t)entry->target_ptr);
@@ -305,7 +305,7 @@ void trampoline_build_for_invoke(InterceptorBackend *self, hook_entry_t *entry) 
     char temp_codeslice[256]           = {0};
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    ret_status_t status                = RS_SUCCESS;
+    RetStatus status                   = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
     zz_ptr_t restore_next_insn_addr;
@@ -462,7 +462,7 @@ void trampoline_active(InterceptorBackend *self, hook_entry_t *entry) {
     char temp_codeslice[256]           = {0};
     CodeSlice *codeslice               = NULL;
     ARMHookEntryBackend *entry_backend = (ARMHookEntryBackend *)entry->backend;
-    ret_status_t status                = RS_SUCCESS;
+    RetStatus status                   = RS_SUCCESS;
     bool is_thumb                      = TRUE;
     zz_addr_t target_addr              = (zz_addr_t)entry->target_ptr;
 

@@ -4,8 +4,7 @@
 #include "interceptor_routing_trampoline.h"
 #include "std_kit/std_kit.h"
 
-ret_status_t ZzHook(void *target_address, void *replace_call, void **origin_call, PRECALL pre_call,
-                    POSTCALL post_call) {
+RetStatus ZzHook(void *target_address, void *replace_call, void **origin_call, PRECALL pre_call, POSTCALL post_call) {
     HookType type;
     if (pre_call || post_call) {
         type = HOOK_TYPE_FUNCTION_via_PRE_POST;
