@@ -6,8 +6,8 @@ include(../../cmake/Util.cmake)
 set(CMAKE_CXX_STANDARD 11)
 enable_language(ASM)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS} -g -std=gnu11")
+set(CMAKE_CXX_FLAGS "-g ${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g")
 
@@ -57,5 +57,20 @@ add_executable(HookZzTest
     ${HookZz.Path}/src/platforms/arch-arm64/writer-arm64.c
     ${HookZz.Path}/src/platforms/arch-arm64/relocator-arm64.c
     hookzz_test.cpp
+    ${GLOBAL.HEADER_FILE}
+)
+
+add_executable(HookZzTestExe
+    ${GLOBAL.SOURCE_FILE}
+    ${HookZz.Path}/src/memory_manager.c
+    ${HookZz.Path}/src/interceptor.c
+    ${HookZz.Path}/src/platforms/arch-arm64/arch-arm64.c
+    ${HookZz.Path}/src/platforms/arch-arm64/ARM64AssemblyCore.c
+    ${HookZz.Path}/src/platforms/arch-arm64/instruction.c
+    ${HookZz.Path}/src/platforms/arch-arm64/reader-arm64.c
+    ${HookZz.Path}/src/platforms/arch-arm64/register-arm64.c
+    ${HookZz.Path}/src/platforms/arch-arm64/writer-arm64.c
+    ${HookZz.Path}/src/platforms/arch-arm64/relocator-arm64.c
+    hookzz_test_exe.cpp
     ${GLOBAL.HEADER_FILE}
 )

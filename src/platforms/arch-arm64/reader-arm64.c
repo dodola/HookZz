@@ -30,7 +30,7 @@ ARM64InstructionCTX *arm64_assembly_reader_cclass(read_inst)(ARM64AssemblyReader
     ARM64InstructionCTX *instCTX = SAFE_MALLOC_TYPE(ARM64InstructionCTX);
 
     instCTX->pc      = (zz_addr_t)self->start_pc + self->inst_bytes->size;
-    instCTX->address = (zz_addr_t)self->inst_bytes->data + self->inst_bytes->size;
+    instCTX->address = (zz_addr_t)self->start_address + self->inst_bytes->size;
     instCTX->size    = 4;
 
     ReadBytes((void *)&instCTX->bytes, (void *)instCTX->address, 4);

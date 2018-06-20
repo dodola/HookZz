@@ -6,17 +6,22 @@
 #include <string.h>
 
 ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64AssemblyReader *input, ARM64AssemblyWriter *output) {
-    ARM64Relocator *relocator = SAFE_MALLOC_TYPE(ARM64Relocator);
-    relocator->input          = input;
-    relocator->output         = output;
+    ARM64Relocator *relocator   = SAFE_MALLOC_TYPE(ARM64Relocator);
+    relocator->input            = input;
+    relocator->output           = output;
+    relocator->io_indexs        = list_new();
+    relocator->literal_instCTXs = list_new();
     return relocator;
 }
 
 void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self) {
     arm64_assembly_reader_reset(self->input, 0, 0);
     arm64_assembly_writer_reset(self->output, 0);
+
     list_destroy(self->literal_instCTXs);
+    self->literal_instCTXs = list_new();
     list_destroy(self->io_indexs);
+    self->io_indexs = list_new();
 }
 
 void arm64_assembly_relocator_cclass(try_relocate)(void *address, int bytes_min, int *bytes_max) {
