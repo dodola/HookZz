@@ -3,6 +3,7 @@
 //
 
 #include "DarwinMemoryManager.h"
+#include "memory-helper-darwin.h"
 
 #include <errno.h>
 #include <mach-o/dyld.h>
@@ -10,54 +11,34 @@
 #include <mach/vm_map.h>
 #include <sys/mman.h>
 
-#include "mach_vm.h"
+int MemoryManager::PageSize() { return darwin_memory_helper_cclass(get_page_size)(); }
 
-inline void get_memory_info(void *address, vm_prot_t *prot, vm_inherit_t *inherit) {
-    vm_address_t region   = (vm_address_t)address;
-    vm_size_t region_size = 0;
-    struct vm_region_submap_short_info_64 info;
-    mach_msg_type_number_t info_count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
-    natural_t max_depth               = 99999;
+void *MemoryManager::AllocatePage(int prot, int n) {
+    vm_address_t page_address;
     kern_return_t kr;
-    kr = vm_region_recurse_64(mach_task_self(), &region, &region_size, &max_depth, (vm_region_recurse_info_t)&info,
-                              &info_count);
-    if (kr != KERN_SUCCESS) {
-        return;
-    }
-    *prot    = info.protection;
-    *inherit = info.inheritance;
+    vm_size_t page_size;
+
+    page_size = darwin_memory_helper_cclass(get_page_size)();
+    /* use vm_allocate not mmap */
+    kr = mach_vm_allocate(mach_task_self(), (mach_vm_address_t *)&page_address, page_size * n, VM_FLAGS_ANYWHERE);
+    /* set page permission */
+    darwin_memory_helper_cclass(set_page_memory_permission)((void *)page_address, 1 | 2);
+
+    return (void *)page_address;
 }
 
-inline void set_page_memory_permission(void *address, int prot) {
-    kern_return_t kr;
-
-    int pageSize = MemoryManager::PageSize();
-
-    kr = mach_vm_protect(mach_task_self(), (vm_address_t)address, pageSize, FALSE, prot);
-    if (kr != KERN_SUCCESS) {
-        // LOG-NEED
-    }
-}
-
-int MemoryManager::PageSize() { return 0; }
-void *MemoryManager::allocateMemoryPage(MemoryAttribute prot, int n) { return NULL; }
-
-void MemoryManager::getProcessMemoryLayout() {
-
+void MemoryManager::GetProcessMemoryLayout() {
     mach_msg_type_number_t count;
     struct vm_region_submap_info_64 info;
     vm_size_t nesting_depth;
 
-    kern_return_t kr     = KERN_SUCCESS;
-    vm_address_t tmpAddr = 0;
-    vm_size_t tmpSize    = 0;
-
-    MemoryBlock *mb = new (MemoryBlock);
-    process_memory_layout.push_back(mb);
+    kern_return_t kr      = KERN_SUCCESS;
+    vm_address_t tmp_addr = 0;
+    vm_size_t tmp_size    = 0;
 
     while (1) {
         count = VM_REGION_SUBMAP_INFO_COUNT_64;
-        kr    = vm_region_recurse_64(mach_task_self(), &tmpAddr, &tmpSize, (natural_t *)&nesting_depth,
+        kr    = vm_region_recurse_64(mach_task_self(), &tmp_addr, &tmp_size, (natural_t *)&nesting_depth,
                                   (vm_region_info_64_t)&info, &count);
         if (kr == KERN_INVALID_ADDRESS) {
             break;
@@ -69,9 +50,11 @@ void MemoryManager::getProcessMemoryLayout() {
         if (info.is_submap) {
             nesting_depth++;
         } else {
-            tmpAddr += tmpSize;
-            mb->address = tmpAddr - tmpSize;
-            mb->size    = tmpSize;
+            MemoryBlock *mb = new (MemoryBlock);
+            process_memory_layout.push_back(mb);
+            tmp_addr += tmp_size;
+            mb->address = tmp_addr - tmp_size;
+            mb->size    = tmp_size;
             mb->prot    = info.protection;
         }
     }
@@ -90,23 +73,23 @@ void MemoryManager::getProcessMemoryLayout() {
   http://shakthimaan.com/downloads/hurd/A.Programmers.Guide.to.the.Mach.System.Calls.pdf
 */
 
-void MemoryManager::CodePatch(void *dest, void *src, int count) {
+void MemoryManager::PatchCode(void *dest, void *src, int count) {
 
-    vm_address_t destPage;
+    vm_address_t dest_page;
     vm_size_t offset;
 
-    int pageSize = PageSize();
+    int page_size = memory_manager_cclass(get_page_size)();
 
     // https://www.gnu.org/software/hurd/gnumach-doc/Memory-Attributes.html
-    destPage = (zz_addr_t)dest & ~(pageSize - 1);
-    offset   = (zz_addr_t)dest - destPage;
+    dest_page = (zz_addr_t)dest & ~(page_size - 1);
+    offset    = (zz_addr_t)dest - dest_page;
 
     vm_prot_t prot;
     vm_inherit_t inherit;
     kern_return_t kr;
     mach_port_t task_self = mach_task_self();
 
-    get_memory_info((void *)destPage, &prot, &inherit);
+    darwin_memory_helper_cclass(get_memory_info)((void *)dest_page, &prot, &inherit);
 
     // For another method, pelease read `REF`;
     // zz_ptr_t code_mmap = mmap(NULL, range_size, PROT_READ | PROT_WRITE,
@@ -115,17 +98,17 @@ void MemoryManager::CodePatch(void *dest, void *src, int count) {
     //   return;
     // }
 
-    void *copyPage = allocateMemoryPage(MEM_RX, 1);
+    void *copy_page = allocateMemoryPage(1 | 2, 1);
 
-    kr = vm_copy(task_self, destPage, pageSize, (vm_address_t)copyPage);
+    kr = vm_copy(task_self, dest_page, page_size, (vm_address_t)copy_page);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
         return;
     }
-    memcpy((void *)((zz_addr_t)copyPage + offset), src, count);
+    memcpy((void *)((zz_addr_t)copy_page + offset), src, count);
 
     // SAME: mprotect(code_mmap, range_size, prot);
-    set_page_memory_permission(copyPage, PROT_EXEC | PROT_READ);
+    set_page_memory_permission(copy_page, PROT_EXEC | PROT_READ);
 
     // TODO: need check `memory region` again.
     /*
@@ -135,18 +118,18 @@ void MemoryManager::CodePatch(void *dest, void *src, int count) {
         *(char *)0x00000001816b01a8 = 'a';
     */
 
-    mach_vm_address_t target_address = destPage;
-    vm_prot_t cur_protectionc, max_protection;
-    kr = mach_vm_remap(task_self, &target_address, pageSize, 0, VM_FLAGS_OVERWRITE, task_self,
-                       (mach_vm_address_t)copyPage,
-                       /*copy*/ TRUE, &cur_protectionc, &max_protection, inherit);
+    mach_vm_address_t target_address = dest_page;
+    vm_prot_t cur_protection, max_protection;
+    kr = mach_vm_remap(task_self, &target_address, page_size, 0, VM_FLAGS_OVERWRITE, task_self,
+                       (mach_vm_address_t)copy_page,
+                       /*copy*/ TRUE, &cur_protection, &max_protection, inherit);
 
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
     }
     // read `REF`
     // munmap(code_mmap, range_size);
-    kr = mach_vm_deallocate(task_self, (mach_vm_address_t)copyPage, pageSize);
+    kr = mach_vm_deallocate(task_self, (mach_vm_address_t)copy_page, page_size);
     if (kr != KERN_SUCCESS) {
         // LOG-NEED
     }

@@ -37,6 +37,6 @@ ARM64InstructionCTX *arm64_assembly_reader_cclass(read_inst)(ARM64AssemblyReader
 
     buffer_array_put(self->inst_bytes, (void *)instCTX->address, 4);
 
-    list_rpush(self->instCTXs, (list_node_t *)instCTX);
+    list_rpush(self->instCTXs, list_node_new(instCTX));
     return instCTX;
 }

@@ -41,7 +41,7 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
 //     memory_manager_t *memory_manager;
 //     memory_manager = memory_manager_cclass(shared_instance)();
 //     cc = memory_manager_cclass(search_near_code_cave)(memory_manager, target_address, range, self->inst_bytes->size);
-//     CHECK(cc);
+//     XCHECK(cc);
 //     memory_manager_cclass(patch_code)(memory_manager, target_address, self->inst_bytes->data, self->inst_bytes->size);
 //     SAFE_FREE(cc);
 //     return;
@@ -54,7 +54,7 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
 //     memory_manager_t *memory_manager;
 //     memory_manager = memory_manager_cclass(shared_instance)();
 //     cs             = memory_manager_cclass(allocate_code_slice)(memory_manager, self->inst_bytes->size);
-//     CHECK(cs);
+//     XCHECK(cs);
 //     arm64_assembly_relocator_cclass(double_write)(relocator, cs->data);
 //     memory_manager_cclass(patch_code)(memory_manager, cs->data, self->inst_bytes->data, self->inst_bytes->size);
 //     SAFE_FREE(cc);
@@ -71,7 +71,7 @@ void arm64_assembly_writer_cclass(put_bytes)(ARM64AssemblyWriter *self, void *da
 
     buffer_array_put(self->inst_bytes, (void *)instCTX->address, 4);
 
-    list_rpush(self->instCTXs, (list_node_t *)instCTX);
+    list_rpush(self->instCTXs, list_node_new(instCTX));
 }
 
 void arm64_assembly_writer_cclass(put_ldr_reg_imm)(ARM64AssemblyWriter *self, ARM64Reg reg, uint32_t offset) {

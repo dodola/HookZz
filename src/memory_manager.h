@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "hookzz.h"
+#include "std_kit/std_list.h"
 
 #include <stdint.h>
 
@@ -39,6 +40,10 @@ typedef struct _memory_manager_t {
 
 #define memory_manager_cclass(member) cclass(memory_manager, member)
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
 memory_manager_t *memory_manager_cclass(shared_instance)();
 
 PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
@@ -54,5 +59,9 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
 CodeCave *memory_manager_cclass(search_code_cave)(memory_manager_t *self, void *address, int range, int size);
 
 CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, int size);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif

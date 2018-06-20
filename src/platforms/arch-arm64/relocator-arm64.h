@@ -24,11 +24,14 @@ typedef struct _ARM64Relocator {
 
 #define arm64_assembly_relocator_cclass(member) cclass(arm64_relocator, member)
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64AssemblyReader *input, ARM64AssemblyWriter *output);
 
 void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self);
 
-void arm64_assembly_relocator_cclass(try_relocate)(ARM64Relocator *self, void *address, int bytes_min, int *bytes_max);
+void arm64_assembly_relocator_cclass(try_relocate)(void *address, int bytes_min, int *bytes_max);
 
 void arm64_assembly_relocator_cclass(relocate_to)(ARM64Relocator *self, void *target_address);
 
@@ -45,4 +48,7 @@ void arm64_assembly_relocator_cclass(rewrite_BaseCmpBranch)(ARM64Relocator *self
 void arm64_assembly_relocator_cclass(rewrite_BranchCond)(ARM64Relocator *self, ARM64InstructionCTX *instCTX);
 void arm64_assembly_relocator_cclass(rewrite_B)(ARM64Relocator *self, ARM64InstructionCTX *instCTX);
 void arm64_assembly_relocator_cclass(rewrite_BL)(ARM64Relocator *self, ARM64InstructionCTX *instCTX);
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 #endif

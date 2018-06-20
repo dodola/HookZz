@@ -65,7 +65,7 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
             continue;
 
         MemoryBlock *mb = SAFE_MALLOC_TYPE(MemoryBlock);
-        list_rpush(self->process_memory_layout, (list_node_t *)mb);
+        list_rpush(self->process_memory_layout, list_node_new(mb));
         tmp_addr += tmp_size;
         mb->address = start_addr;
         mb->size    = end_addr - start_addr;

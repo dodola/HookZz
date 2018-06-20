@@ -34,7 +34,7 @@ set(CMAKE_CXX_STANDARD 11)
 enable_language(ASM)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_ASM_FLAGS "-arch arm64")
 # set(CMAKE_ASM_FLAGS "-arch arm64 -fembed-bitcode")

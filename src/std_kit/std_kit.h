@@ -5,7 +5,13 @@
 #include <stdlib.h>
 
 /* malloc with 0 and NULL check */
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 void *safe_malloc(size_t size);
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 /* malloc macro */
 #define SAFE_MALLOC_TYPE(TYPE) (TYPE *)safe_malloc(sizeof(TYPE));
@@ -19,7 +25,7 @@ void *safe_malloc(size_t size);
 
 #endif
 
-#define CHECK(repr)
+#define XCHECK(repr)
 
 #define ERROR_LOG_STR(str)
 

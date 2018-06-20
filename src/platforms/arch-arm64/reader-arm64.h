@@ -18,10 +18,16 @@ typedef struct _ARM64AssemblyReader {
 
 #define arm64_assembly_reader_cclass(member) cclass(arm64_assembly_reader, member)
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 ARM64AssemblyReader *arm64_assembly_reader_cclass(new)(void *address, void *pc);
 
 void arm64_assembly_reader_cclass(reset)(ARM64AssemblyReader *self, void *address, void *pc);
 
 ARM64InstructionCTX *arm64_assembly_reader_cclass(read_inst)(ARM64AssemblyReader *self);
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif

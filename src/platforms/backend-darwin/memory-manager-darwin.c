@@ -10,11 +10,20 @@
 
 PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
 
-PLATFORM_API int memory_manager_cclass(get_page_size)() { return 0x4000; }
+PLATFORM_API int memory_manager_cclass(get_page_size)() { return darwin_memory_helper_cclass(get_page_size)(); }
 
 PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
-    // TODO
-    return NULL;
+    vm_address_t page_address;
+    kern_return_t kr;
+    vm_size_t page_size;
+
+    page_size = darwin_memory_helper_cclass(get_page_size)();
+    /* use vm_allocate not mmap */
+    kr = mach_vm_allocate(mach_task_self(), (mach_vm_address_t *)&page_address, page_size * n, VM_FLAGS_ANYWHERE);
+    /* set page permission */
+    darwin_memory_helper_cclass(set_page_memory_permission)((void *)page_address, 1 | 2);
+
+    return (void *)page_address;
 }
 
 PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self) {
@@ -42,7 +51,7 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
             nesting_depth++;
         } else {
             MemoryBlock *mb = SAFE_MALLOC_TYPE(MemoryBlock);
-            list_rpush(self->process_memory_layout, (list_node_t *)mb);
+            list_rpush(self->process_memory_layout, list_node_new(mb));
             tmp_addr += tmp_size;
             mb->address = (void *)((zz_addr_t)tmp_addr - tmp_size);
             mb->size    = tmp_size;
@@ -66,14 +75,14 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
 
 PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count) {
 
-    void *dest_page;
-    int offset;
+    vm_address_t dest_page;
+    vm_size_t offset;
 
     int page_size = memory_manager_cclass(get_page_size)();
 
     // https://www.gnu.org/software/hurd/gnumach-doc/Memory-Attributes.html
-    dest_page = (void *)((zz_addr_t)dest & ~(page_size - 1));
-    offset    = (zz_addr_t)dest - (zz_addr_t)dest_page;
+    dest_page = (zz_addr_t)dest & ~(page_size - 1);
+    offset    = (zz_addr_t)dest - dest_page;
 
     vm_prot_t prot;
     vm_inherit_t inherit;

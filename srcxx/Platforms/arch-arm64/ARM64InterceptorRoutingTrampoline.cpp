@@ -29,7 +29,7 @@ void Interceptor::initializeBackend(MemoryManager *) {
 }
 
 void ARM64InterceptorBackend::Prepare(HookEntry *entry) {
-    int redirect_limit                   = 0;
+    int limit_relocate_inst_size         = 0;
     ARM64HookEntryBackend *entry_backend = new (ARM64HookEntryBackend);
 
     entry->backend = (struct HookEntryBackend *)entry_backend;
@@ -38,12 +38,12 @@ void ARM64InterceptorBackend::Prepare(HookEntry *entry) {
         entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
     } else {
         // check the first few instructions, preparatory work of instruction-fix
-        relocatorARM64->tryRelocate(entry->target_address, ARM64_FULL_REDIRECT_SIZE, &redirect_limit);
-        if (redirect_limit != 0 && redirect_limit > ARM64_TINY_REDIRECT_SIZE &&
-            redirect_limit < ARM64_FULL_REDIRECT_SIZE) {
+        relocatorARM64->tryRelocate(entry->target_address, ARM64_FULL_REDIRECT_SIZE, &limit_relocate_inst_size);
+        if (limit_relocate_inst_size != 0 && limit_relocate_inst_size > ARM64_TINY_REDIRECT_SIZE &&
+            limit_relocate_inst_size < ARM64_FULL_REDIRECT_SIZE) {
             entry->isNearJump                       = true;
             entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
-        } else if (redirect_limit != 0 && redirect_limit < ARM64_TINY_REDIRECT_SIZE) {
+        } else if (limit_relocate_inst_size != 0 && limit_relocate_inst_size < ARM64_TINY_REDIRECT_SIZE) {
             return;
         } else {
             entry_backend->limit_relocate_inst_size = ARM64_FULL_REDIRECT_SIZE;

@@ -22,7 +22,8 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
 
     list_iterator_t *it = list_iterator_new(self->trampoline_tables, LIST_HEAD);
     for (int i = 0; i < self->trampoline_tables->len; i++) {
-        ClosureBridgeTrampolineTable *tmp_table = (ClosureBridgeTrampolineTable *)list_at(self->trampoline_tables, i);
+        ClosureBridgeTrampolineTable *tmp_table =
+            (ClosureBridgeTrampolineTable *)(list_at(self->trampoline_tables, i)->val);
         if (tmp_table->free_count > 0) {
             table = tmp_table;
         }
@@ -58,7 +59,7 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
     table->used_count++;
     table->free_count--;
 
-    list_rpush(self->bridge_infos, (list_node_t *)cb_info);
+    list_rpush(self->bridge_infos, list_node_new(cb_info));
     return cb_info;
 }
 ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(ClosureBridge *self) {
@@ -96,6 +97,6 @@ ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolin
     table->used_count                   = 0;
     table->free_count                   = (uint16_t)t;
 
-    list_rpush(self->trampoline_tables, (list_node_t *)table);
+    list_rpush(self->trampoline_tables, list_node_new(table));
     return table;
 }

@@ -27,7 +27,30 @@ void interceptor_cclass(initialize_interceptor_backend)(memory_manager_t *memory
     backend->memory_manager = memory_manager;
 }
 
-ARCH_API void interceptor_trampoline_cclass(prepare)(hook_entry_t *entry) {}
+ARCH_API void interceptor_trampoline_cclass(prepare)(hook_entry_t *entry) {
+    int limit_relocate_inst_size              = 0;
+    hook_entry_backend_arm64_t *entry_backend = SAFE_MALLOC_TYPE(hook_entry_backend_arm64_t);
+    if (entry->is_try_near_jump) {
+        entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
+    } else {
+        arm64_assembly_relocator_cclass(try_relocate)(entry->target_address, ARM64_FULL_REDIRECT_SIZE,
+                                                      &limit_relocate_inst_size);
+        if (limit_relocate_inst_size != 0 && limit_relocate_inst_size > ARM64_TINY_REDIRECT_SIZE &&
+            limit_relocate_inst_size < ARM64_FULL_REDIRECT_SIZE) {
+            entry->is_near_jump                     = true;
+            entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
+        } else if (limit_relocate_inst_size != 0 && limit_relocate_inst_size < ARM64_TINY_REDIRECT_SIZE) {
+            return;
+        } else {
+            entry_backend->limit_relocate_inst_size = ARM64_FULL_REDIRECT_SIZE;
+        }
+    }
+
+    // save original prologue
+    memcpy(entry->origin_prologue.data, entry->target_address, entry_backend->limit_relocate_inst_size);
+    entry->origin_prologue.size    = entry_backend->limit_relocate_inst_size;
+    entry->origin_prologue.address = entry->target_address;
+}
 
 ARCH_API void interceptor_trampoline_cclass(active)(hook_entry_t *entry) {
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
@@ -78,14 +101,14 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry
         CodeCave *cc;
         cc = memory_manager_cclass(search_code_cave)(memory_manager, entry->target_address, ARM64_TINY_REDIRECT_SIZE,
                                                      writer_arm64->inst_bytes->size);
-        CHECK(cc);
+        XCHECK(cc);
         arm64_assembly_writer_cclass(patch_to)(writer_arm64, cc->address);
         entry->on_enter_transfer_trampoline = (void *)cc->address;
         SAFE_FREE(cc);
     } else {
         CodeSlice *cs;
         cs = memory_manager_cclass(allocate_code_slice)(memory_manager, writer_arm64->inst_bytes->size);
-        CHECK(cs);
+        XCHECK(cs);
         arm64_assembly_writer_cclass(patch_to)(writer_arm64, cs->data);
         entry->on_enter_transfer_trampoline = (void *)cs->data;
         SAFE_FREE(cs);
@@ -145,7 +168,7 @@ ARCH_API void interceptor_trampoline_cclass(build_for_invoke)(hook_entry_t *entr
     memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
     CodeSlice *cs;
     cs = memory_manager_cclass(allocate_code_slice)(memory_manager, relocator_arm64->output->inst_bytes->size);
-    CHECK(cs);
+    XCHECK(cs);
 
     arm64_assembly_relocator_cclass(double_write)(relocator_arm64, cs->data);
     arm64_assembly_writer_cclass(patch_to)(relocator_arm64->output, cs->data);

@@ -1,10 +1,9 @@
 #ifndef platforms_backend_darwin_memory_helper_darwin_h
 #define platforms_backend_darwin_memory_helper_darwin_h
 
-#include "core.h"
+#include "Core.h"
 #include "hookzz.h"
 #include "memory_manager.h"
-#include "std_kit/std_kit.h"
 
 #include "mach_vm.h"
 #include <mach-o/dyld.h>

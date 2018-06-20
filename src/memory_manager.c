@@ -11,8 +11,11 @@
 memory_manager_t *g_memory_manager = NULL;
 memory_manager_t *memory_manager_cclass(shared_instance)() {
     if (g_memory_manager == NULL) {
-        g_memory_manager = SAFE_MALLOC_TYPE(memory_manager_t);
-        CHECK(g_memory_manager != NULL);
+        g_memory_manager                        = SAFE_MALLOC_TYPE(memory_manager_t);
+        g_memory_manager->code_caves            = list_new();
+        g_memory_manager->free_memory_blocks    = list_new();
+        g_memory_manager->process_memory_layout = list_new();
+        XCHECK(g_memory_manager != NULL);
     }
     return g_memory_manager;
 }
@@ -21,7 +24,7 @@ CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, in
     CodeSlice *cs       = NULL;
     list_iterator_t *it = list_iterator_new(self->free_memory_blocks, LIST_HEAD);
     for (int i = 0; i < self->free_memory_blocks->len; i++) {
-        FreeMemoryBlock *fmb = (FreeMemoryBlock *)list_at(self->free_memory_blocks, i);
+        FreeMemoryBlock *fmb = (FreeMemoryBlock *)(list_at(self->free_memory_blocks, i)->val);
         if ((fmb->total_size - fmb->used_size) > size) {
             cs       = SAFE_MALLOC_TYPE(CodeSlice);
             cs->data = (void *)(fmb->address + fmb->used_size);
@@ -37,10 +40,10 @@ CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, in
         void *page_ptr       = memory_manager_cclass(allocate_page)(self, 1 | 2, 1);
         FreeMemoryBlock *fmb = SAFE_MALLOC_TYPE(FreeMemoryBlock);
         fmb->used_size       = 0;
-        fmb->total_size      = memory_manager_cclass(get_page_size);
+        fmb->total_size      = memory_manager_cclass(get_page_size)();
         fmb->prot            = 1 | 2;
         fmb->address         = page_ptr;
-        list_rpush(self->free_memory_blocks, (list_node_t *)fmb);
+        list_rpush(self->free_memory_blocks, list_node_new(fmb));
 
         fmb->used_size += size;
         cs       = SAFE_MALLOC_TYPE(CodeSlice);
@@ -77,7 +80,7 @@ CodeCave *memory_manager_cclass(search_code_cave)(memory_manager_t *self, void *
     limit_start         = (zz_addr_t)address + range - size;
     list_iterator_t *it = list_iterator_new(self->free_memory_blocks, LIST_HEAD);
     for (int i = 0; i < self->process_memory_layout->len; i++) {
-        MemoryBlock *mb = (MemoryBlock *)list_at(self->process_memory_layout, i);
+        MemoryBlock *mb = (MemoryBlock *)(list_at(self->process_memory_layout, i)->val);
         search_start    = (zz_addr_t)mb->address > limit_start ? (zz_addr_t)mb->address : limit_start;
         search_end = ((zz_addr_t)mb->address + mb->size) < limit_end ? ((zz_addr_t)mb->address + mb->size) : limit_end;
         void *p    = search_dummy_code_cave(search_start, search_end, size);

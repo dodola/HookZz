@@ -35,6 +35,9 @@ typedef struct _ARM64AssemblyWriter {
 
 #define arm64_assembly_writer_cclass(member) cclass(arm64_assembly_writer, member)
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 ARM64AssemblyWriter *arm64_assembly_writer_cclass(new)(void *pc);
 void arm64_assembly_writer_cclass(destory)(ARM64AssemblyWriter *self);
 void arm64_assembly_writer_cclass(reset)(ARM64AssemblyWriter *self, void *pc);
@@ -50,4 +53,7 @@ void arm64_assembly_writer_cclass(put_ldr_reg_reg_offset)(ARM64AssemblyWriter *s
 void arm64_assembly_writer_cclass(put_br_reg)(ARM64AssemblyWriter *self, ARM64Reg reg);
 void arm64_assembly_writer_cclass(put_blr_reg)(ARM64AssemblyWriter *self, ARM64Reg reg);
 void arm64_assembly_writer_cclass(put_b_imm)(ARM64AssemblyWriter *self, uint64_t offset);
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 #endif

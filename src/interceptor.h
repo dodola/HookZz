@@ -53,6 +53,10 @@ typedef struct _interceptor_t {
 
 #define interceptor_cclass(member) cclass(interceptor, member)
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
 interceptor_t *interceptor_cclass(shared_instance)(void);
 
 hook_entry_t *interceptor_cclass(find_hook_entry)(interceptor_t *self, void *target_address);
@@ -60,5 +64,9 @@ hook_entry_t *interceptor_cclass(find_hook_entry)(interceptor_t *self, void *tar
 void interceptor_cclass(add_hook_entry)(interceptor_t *self, hook_entry_t *entry);
 
 void interceptor_cclass(initialize_interceptor_backend)();
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif
