@@ -1,5 +1,6 @@
 #include "memory_manager.h"
 #include "core.h"
+#include "std_kit/std_list.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -29,6 +30,23 @@ CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, in
             fmb->used_size += size;
             return cs;
         }
+    }
+
+    // allocate a new page
+    if (cs == NULL) {
+        void *page_ptr       = memory_manager_cclass(allocate_page)(self, 1 | 2, 1);
+        FreeMemoryBlock *fmb = SAFE_MALLOC_TYPE(FreeMemoryBlock);
+        fmb->used_size       = 0;
+        fmb->total_size      = memory_manager_cclass(get_page_size);
+        fmb->prot            = 1 | 2;
+        fmb->address         = page_ptr;
+        list_rpush(self->free_memory_blocks, (list_node_t *)fmb);
+
+        fmb->used_size += size;
+        cs       = SAFE_MALLOC_TYPE(CodeSlice);
+        cs->data = (void *)(fmb->address + fmb->used_size);
+        cs->size = size;
+        return cs;
     }
     return NULL;
 }

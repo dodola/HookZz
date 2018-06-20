@@ -23,27 +23,27 @@ void ARM64AssemblerWriter::PatchTo(void *target_address) {
     MemoryManager::CodePatch(target_address, instBytes.data(), instBytes.size());
 }
 
-void ARM64AssemblerWriter::NearPatchTo(void *target_address, int range) {
-    start_address = target_address;
-    CodeCave *cc;
-    MemoryManager *mm = MemoryManager::GetInstance();
-    cc                = mm->searchNearCodeCave(target_address, range, instBytes.size());
-    MemoryManager::CodePatch((void *)cc->address, instBytes.data(), instBytes.size());
-    delete (cc);
-}
+// void ARM64AssemblerWriter::NearPatchTo(void *target_address, int range) {
+//     start_address = target_address;
+//     CodeCave *cc;
+//     MemoryManager *mm = MemoryManager::GetInstance();
+//     cc                = mm->searchNearCodeCave(target_address, range, instBytes.size());
+//     MemoryManager::CodePatch((void *)cc->address, instBytes.data(), instBytes.size());
+//     delete (cc);
+// }
 
-void ARM64AssemblerWriter::RelocatePatchTo(ARM64Relocator *relocatorARM64, void *target_address) {
-    start_address = target_address;
-    CodeSlice *cs;
-    MemoryManager *mm = MemoryManager::GetInstance();
-    cs                = mm->allocateCodeSlice(instBytes.size());
+// void ARM64AssemblerWriter::RelocatePatchTo(ARM64Relocator *relocatorARM64, void *target_address) {
+//     start_address = target_address;
+//     CodeSlice *cs;
+//     MemoryManager *mm = MemoryManager::GetInstance();
+//     cs                = mm->allocateCodeSlice(instBytes.size());
 
-    relocatorARM64->doubleWrite(cs->data);
+//     relocatorARM64->doubleWrite(cs->data);
 
-    MemoryManager::CodePatch(cs->data, instBytes.data(), instBytes.size());
+//     MemoryManager::CodePatch(cs->data, instBytes.data(), instBytes.size());
 
-    delete (cs);
-}
+//     delete (cs);
+// }
 
 void ARM64AssemblerWriter::putBytes(void *data, int dataSize) {
     ARM64InstructionCTX *instCTX = new (ARM64InstructionCTX);

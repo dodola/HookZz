@@ -1,7 +1,8 @@
-#ifndef invocation_h
-#define invocation_h
+#ifndef interceptor_routing_h
+#define interceptor_routing_h
 
 #include "closure_bridge.h"
+#include "core.h"
 #include "hookzz.h"
 #include "interceptor.h"
 

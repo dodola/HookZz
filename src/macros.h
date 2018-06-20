@@ -1,4 +1,5 @@
-
+#ifndef macros_h
+#define macros_h
 
 #include <stdint.h>
 
@@ -20,3 +21,5 @@
 
 #define ALIGN_FLOOR(address, range) ((uintptr_t)address & ~((uintptr_t)range - 1))
 #define ALIGN_CEIL(address, range) (((uintptr_t)address + (uintptr_t)range - 1) & ~((uintptr_t)range - 1))
+
+#endif

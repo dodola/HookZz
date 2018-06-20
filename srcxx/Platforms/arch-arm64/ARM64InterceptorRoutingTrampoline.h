@@ -9,28 +9,28 @@
 #include "ARM64Relocator.h"
 #include "ARM64Writer.h"
 #include "Interceptor.h"
-#include "InterceptorBackend.h"
+#include "InterceptorRoutingTrampoline.h"
 #include "MemoryManager.h"
 
-class ARM64InterceptorBackend : public InterceptorBackend {
+class ARM64InterceptorRoutingTrampoline : public InterceptorRoutingTrampoline {
   public:
-    MemoryManager *mm;
+    MemoryManager *memory_manager;
     ARM64Relocator *relocatorARM64;
     ARM64AssemblerWriter *writerARM64;
     ARM64AssemblyReader *readerARM64;
 
   public:
-    void PrepareTrampoline(HookEntry *entry);
+    void Prepare(HookEntry *entry);
 
-    void BuildForEnterTransferTrampoline(HookEntry *entry);
+    void BuildForEnterTransfer(HookEntry *entry);
 
-    void BuildForEnterTrampoline(HookEntry *entry);
+    void BuildForEnter(HookEntry *entry);
 
-    void BuildForDynamicBinaryInstrumentationTrampoline(HookEntry *entry);
+    void BuildForDynamicBinaryInstrumentation(HookEntry *entry);
 
-    void BuildForLeaveTrampoline(HookEntry *entry);
+    void BuildForLeave(HookEntry *entry);
 
-    void BuildForInvokeTrampoline(HookEntry *entry);
+    void BuildForInvoke(HookEntry *entry);
 
     void ActiveTrampoline(HookEntry *entry);
 };

@@ -10,9 +10,9 @@
 
 #define PRIAVE
 
-#include "hookzz.h"
-
 #include "CommonClass/DesignPattern/Singleton.h"
+#include "Core.h"
+#include "hookzz.h"
 
 typedef struct _ClosureBridgeInfo {
     void *user_code;
@@ -63,8 +63,8 @@ class DynamicClosureBridge {
     DynamicClosureBridgeTrampolineTable *addDynamicClosurceBridgeTrampolineTable();
 };
 
-typedef void (*USER_CODE_CALL)(RegState *rs, ClosureBridgeInfo *cbi);
-typedef void (*DYNAMIC_USER_CODE_CALL)(RegState *rs, DynamicClosureBridgeInfo *cbi);
+typedef void (*USER_CODE_CALL)(RegState *rs, ClosureBridgeInfo *cbInfo);
+typedef void (*DYNAMIC_USER_CODE_CALL)(RegState *rs, DynamicClosureBridgeInfo *dcbInfo);
 
 #ifdef __cplusplus
 extern "C" {

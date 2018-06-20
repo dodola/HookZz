@@ -23,19 +23,17 @@ class InterceptorBackend;
 struct HookEntryBackend;
 
 typedef struct _HookEntry {
-    zz_ptr_t target_address;
+    void *target_address;
 
-    HookType hook_type;
+    HookType type;
 
-    unsigned long id;
+    unsigned int id;
+
+    bool isEnabled;
 
     bool isTryNearJump;
 
     bool isNearJump;
-
-    bool isEnabled;
-
-    ThreadLocalKey *thread_local_key;
 
     PRECALL pre_call;
     POSTCALL post_call;
@@ -62,7 +60,6 @@ class Interceptor {
     MemoryManager *mm;
 
   public:
-    InterceptorBackend *backend;
     bool isSupportRXMemory;
     std::vector<HookEntry *> hook_entries;
 

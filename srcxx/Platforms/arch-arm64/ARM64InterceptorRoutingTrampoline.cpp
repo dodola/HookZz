@@ -14,8 +14,8 @@
 #define ARM64_FULL_REDIRECT_SIZE 16
 #define ARM64_NEAR_JUMP_RANGE ((1 << 25) << 2)
 
-void Interceptor::initializeBackend(MemoryManager *mm) {
-    if (!mm->is_support_rx_memory) {
+void Interceptor::initializeBackend(MemoryManager *) {
+    if (!memory_manager->is_support_rx_memory) {
         // LOG-NEED
     }
 
@@ -23,12 +23,12 @@ void Interceptor::initializeBackend(MemoryManager *mm) {
     backend->readerARM64             = new ARM64AssemblyReader(0, 0);
     backend->writerARM64             = new ARM64AssemblerWriter(0);
     backend->relocatorARM64          = new ARM64Relocator(backend->readerARM64, backend->writerARM64);
-    backend->mm                      = mm;
+    backend->memory_manager          = memory_manager;
 
     this->backend = backend;
 }
 
-void ARM64InterceptorBackend::PrepareTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::Prepare(HookEntry *entry) {
     int redirect_limit                   = 0;
     ARM64HookEntryBackend *entry_backend = new (ARM64HookEntryBackend);
 
@@ -61,7 +61,7 @@ void ARM64InterceptorBackend::PrepareTrampoline(HookEntry *entry) {
     relocatorARM64->input->reset(entry->target_address, entry->target_address);
 }
 
-void ARM64InterceptorBackend::BuildForEnterTransferTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::BuildForEnterTransfer(HookEntry *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     RetStatus status                     = RS_SUCCESS;
 
@@ -78,22 +78,22 @@ void ARM64InterceptorBackend::BuildForEnterTransferTrampoline(HookEntry *entry) 
     }
 
     if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
-        MemoryManager *mm = Singleton<MemoryManager>::GetInstance();
-        CodeCave *cc      = mm->searchNearCodeCave(entry->target_address, ARM64_NEAR_JUMP_RANGE,
-                                              relocatorARM64->output->instBytes.size());
+        MemoryManager *memory_manager = Singleton<MemoryManager>::GetInstance();
+        CodeCave *cc                  = memory_manager->searchNearCodeCave(entry->target_address, ARM64_NEAR_JUMP_RANGE,
+                                                          relocatorARM64->output->instBytes.size());
         relocatorARM64->output->NearPatchTo((void *)cc->address, ARM64_NEAR_JUMP_RANGE);
         entry->on_enter_transfer_trampoline = (void *)cc->address;
         delete (cc);
     } else {
-        MemoryManager *mm = Singleton<MemoryManager>::GetInstance();
-        CodeSlice *cs     = mm->allocateCodeSlice(relocatorARM64->output->instBytes.size());
+        MemoryManager *memory_manager = Singleton<MemoryManager>::GetInstance();
+        CodeSlice *cs                 = memory_manager->allocateCodeSlice(relocatorARM64->output->instBytes.size());
         relocatorARM64->output->PatchTo(cs->data);
         entry->on_enter_transfer_trampoline = cs->data;
         delete (cs);
     }
 }
 
-void ARM64InterceptorBackend::BuildForEnterTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::BuildForEnter(HookEntry *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     RetStatus status                     = RS_SUCCESS;
 
@@ -119,12 +119,12 @@ void ARM64InterceptorBackend::BuildForEnterTrampoline(HookEntry *entry) {
     // build the double trampline aka enter_transfer_trampoline
     if (entry_backend && entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
         if (entry->hook_type != HOOK_TYPE_FUNCTION_via_GOT) {
-            BuildForEnterTransferTrampoline(entry);
+            BuildForEnterTransfer(entry);
         }
     }
 }
 
-void ARM64InterceptorBackend::BuildForDynamicBinaryInstrumentationTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::BuildForDynamicBinaryInstrumentation(HookEntry *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     ClosureBridgeInfo *cbInfo;
     ClosureBridge *cb = Singleton<ClosureBridge>::GetInstance();
@@ -138,12 +138,12 @@ void ARM64InterceptorBackend::BuildForDynamicBinaryInstrumentationTrampoline(Hoo
     // build the double trampline aka enter_transfer_trampoline
     if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
         if (entry->hook_type != HOOK_TYPE_FUNCTION_via_GOT) {
-            BuildForEnterTransferTrampoline(entry);
+            BuildForEnterTransfer(entry);
         }
     }
 }
 
-void ARM64InterceptorBackend::BuildForLeaveTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::BuildForLeave(HookEntry *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
 
     if (entry->hook_type == HOOK_TYPE_FUNCTION_via_GOT) {
@@ -165,7 +165,7 @@ void ARM64InterceptorBackend::BuildForLeaveTrampoline(HookEntry *entry) {
     }
 }
 
-void ARM64InterceptorBackend::BuildForInvokeTrampoline(HookEntry *entry) {
+void ARM64InterceptorBackend::BuildForInvoke(HookEntry *entry) {
     ARM64HookEntryBackend *entry_backend = (ARM64HookEntryBackend *)entry->backend;
     RetStatus status                     = RS_SUCCESS;
 
@@ -187,8 +187,8 @@ void ARM64InterceptorBackend::BuildForInvokeTrampoline(HookEntry *entry) {
     relocatorARM64->output->put_br_reg(ARM64_REG_X17);
     relocatorARM64->output->putBytes(&originNextInstAddress, sizeof(void *));
 
-    MemoryManager *mm = MemoryManager::GetInstance();
-    CodeSlice *cs     = mm->allocateCodeSlice(relocatorARM64->output->instBytes.size());
+    MemoryManager *memory_manager = MemoryManager::GetInstance();
+    CodeSlice *cs                 = memory_manager->allocateCodeSlice(relocatorARM64->output->instBytes.size());
     relocatorARM64->output->RelocatePatchTo(relocatorARM64, cs->data);
     entry->on_invoke_trampoline = cs->data;
     delete (cs);

@@ -25,13 +25,9 @@ class ARM64AssemblerWriter {
 
     void PatchTo(void *target_address);
 
-    void NearPatchTo(void *target_address, int range);
-
-    void RelocatePatchTo(ARM64Relocator *relocatorARM64, void *target_address);
-
     void putBytes(void *data, int dataSize);
 
-    inline void put_ldr_reg_imm(ARM64Reg reg, uint32_t offset) {
+    void put_ldr_reg_imm(ARM64Reg reg, uint32_t offset) {
         ARM64RegInfo ri;
         DescribeARM64Reigster(reg, &ri);
 
@@ -43,7 +39,7 @@ class ARM64AssemblerWriter {
         putBytes((void *)&inst, 4);
     }
 
-    inline void put_str_reg_reg_offset(ARM64Reg src_reg, ARM64Reg dst_reg, uint64_t offset) {
+    void put_str_reg_reg_offset(ARM64Reg src_reg, ARM64Reg dst_reg, uint64_t offset) {
 
         ARM64RegInfo rs, rd;
         DescribeARM64Reigster(src_reg, &rs);
@@ -62,7 +58,7 @@ class ARM64AssemblerWriter {
         putBytes((void *)&inst, 4);
     }
 
-    inline void put_ldr_reg_reg_offset(ARM64Reg dst_reg, ARM64Reg src_reg, uint64_t offset) {
+    void put_ldr_reg_reg_offset(ARM64Reg dst_reg, ARM64Reg src_reg, uint64_t offset) {
         ARM64RegInfo rs, rd;
         DescribeARM64Reigster(src_reg, &rs);
         DescribeARM64Reigster(dst_reg, &rd);
@@ -80,7 +76,7 @@ class ARM64AssemblerWriter {
         putBytes((void *)&inst, 4);
     }
 
-    inline void put_br_reg(ARM64Reg reg) {
+    void put_br_reg(ARM64Reg reg) {
         ARM64RegInfo ri;
         DescribeARM64Reigster(reg, &ri);
 
@@ -90,7 +86,7 @@ class ARM64AssemblerWriter {
         putBytes((void *)&inst, 4);
     }
 
-    inline void put_blr_reg(ARM64Reg reg) {
+    void put_blr_reg(ARM64Reg reg) {
         ARM64RegInfo ri;
         DescribeARM64Reigster(reg, &ri);
 
@@ -101,7 +97,7 @@ class ARM64AssemblerWriter {
         putBytes((void *)&inst, 4);
     }
 
-    inline void put_b_imm(uint64_t offset) {
+    void put_b_imm(uint64_t offset) {
         uint32_t op   = 0b0, imm26;
         imm26         = (offset >> 2) & 0x03ffffff;
         uint32_t inst = 0x14000000 | op << 31 | imm26;
