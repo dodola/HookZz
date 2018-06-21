@@ -28,6 +28,7 @@ void buffer_array_put(buffer_array_t *self, void *data, int length) {
         self->data     = data;
     }
     memcpy(self->data + self->size, data, length);
+    self->size += length;
 }
 
 void buffer_array_clear(buffer_array_t *self) {

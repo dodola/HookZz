@@ -61,17 +61,21 @@ void arm64_assembly_writer_cclass(patch_to)(ARM64AssemblyWriter *self, void *tar
 //     return;
 // }
 
+#define ARM64_INST_SIZE 4
+
 void arm64_assembly_writer_cclass(put_bytes)(ARM64AssemblyWriter *self, void *data, int length) {
-    ARM64InstructionCTX *instCTX = SAFE_MALLOC_TYPE(ARM64InstructionCTX);
+    assert(length % 4 == 0);
+    for (int i = 0; i < (length / ARM64_INST_SIZE); i++) {
+        ARM64InstructionCTX *instCTX = SAFE_MALLOC_TYPE(ARM64InstructionCTX);
+        instCTX->pc                  = (zz_addr_t)self->start_pc + self->inst_bytes->size;
+        instCTX->address             = (zz_addr_t)self->inst_bytes->data + self->inst_bytes->size;
+        instCTX->size                = ARM64_INST_SIZE;
 
-    instCTX->pc      = (zz_addr_t)self->start_pc + self->inst_bytes->size;
-    instCTX->address = (zz_addr_t)self->inst_bytes->data + self->inst_bytes->size;
-    instCTX->size    = 4;
-    ReadBytes(&instCTX->bytes, (void *)instCTX->address, 4);
+        ReadBytes(&instCTX->bytes, (void *)((zz_addr_t)data + ARM64_INST_SIZE * i), ARM64_INST_SIZE);
+        buffer_array_put(self->inst_bytes, (void *)((zz_addr_t)data + ARM64_INST_SIZE * i), ARM64_INST_SIZE);
 
-    buffer_array_put(self->inst_bytes, (void *)instCTX->address, 4);
-
-    list_rpush(self->instCTXs, list_node_new(instCTX));
+        list_rpush(self->instCTXs, list_node_new(instCTX));
+    }
 }
 
 void arm64_assembly_writer_cclass(put_ldr_reg_imm)(ARM64AssemblyWriter *self, ARM64Reg reg, uint32_t offset) {

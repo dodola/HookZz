@@ -112,10 +112,16 @@ void arm64_assembly_relocator_cclass(relocate_write)(ARM64Relocator *self) {
     int done_relocated_input_count;
     done_relocated_input_count = self->io_indexs->len;
 
-    if (self->input->instCTXs->len < self->io_indexs->len) {
+    if (self->input->instCTXs->len > self->io_indexs->len) {
         instCTX = (ARM64InstructionCTX *)(list_at(self->input->instCTXs, done_relocated_input_count)->val);
     } else
         return;
+
+    // push relocate input <-> output index
+    io_index_t *io_index   = SAFE_MALLOC_TYPE(io_index_t);
+    io_index->input_index  = done_relocated_input_count;
+    io_index->output_index = self->output->instCTXs->len;
+    list_rpush(self->io_indexs, list_node_new(io_index));
 
     switch (getInstType(instCTX->bytes)) {
     case LoadLiteral:
@@ -140,12 +146,6 @@ void arm64_assembly_relocator_cclass(relocate_write)(ARM64Relocator *self) {
     if (!rewritten) {
         arm64_assembly_writer_cclass(put_bytes)(self->output, (void *)&instCTX->bytes, instCTX->size);
     }
-
-    // push relocate input <-> output index
-    io_index_t *io_index   = SAFE_MALLOC_TYPE(io_index_t);
-    io_index->input_index  = done_relocated_input_count;
-    io_index->output_index = self->output->instCTXs->len;
-    list_rpush(self->io_indexs, list_node_new(io_index));
 }
 
 void arm64_assembly_relocator_cclass(rewrite_LoadLiteral)(ARM64Relocator *self, ARM64InstructionCTX *instCTX) {
@@ -156,19 +156,12 @@ void arm64_assembly_relocator_cclass(rewrite_LoadLiteral)(ARM64Relocator *self, 
     label          = get_insn_sub(instCTX->bytes, 5, 19);
     target_address = (label << 2) + instCTX->pc;
 
-    /*
-        0x1000: ldr Rt, #0x8
-        0x1004: b #0xc
-        0x1008: .long 0x4321
-        0x100c: .long 0x8765
-        0x1010: ldr Rt, Rt
-    */
     ARM64Reg regRt = arm64_register_disdescribe(Rt, 0);
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, regRt, 0x8);
     arm64_assembly_writer_cclass(put_b_imm)(self->output, 0xc);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&target_address, sizeof(target_address));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
     arm64_assembly_writer_cclass(put_ldr_reg_reg_offset)(self->output, regRt, regRt, 0);
 }
 
@@ -189,9 +182,9 @@ void arm64_assembly_relocator_cclass(rewrite_BaseCmpBranch)(ARM64Relocator *self
     arm64_assembly_writer_cclass(put_b_imm)(self->output, 0x14);
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, ARM64_REG_X17, 0x8);
     arm64_assembly_writer_cclass(put_br_reg)(self->output, ARM64_REG_X17);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&target_address, sizeof(zz_ptr_t));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
 }
 
 void arm64_assembly_relocator_cclass(rewrite_BranchCond)(ARM64Relocator *self, ARM64InstructionCTX *instCTX) {
@@ -211,9 +204,9 @@ void arm64_assembly_relocator_cclass(rewrite_BranchCond)(ARM64Relocator *self, A
     arm64_assembly_writer_cclass(put_b_imm)(self->output, 0x14);
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, ARM64_REG_X17, 0x8);
     arm64_assembly_writer_cclass(put_br_reg)(self->output, ARM64_REG_X17);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&target_address, sizeof(zz_ptr_t));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
 }
 
 void arm64_assembly_relocator_cclass(rewrite_B)(ARM64Relocator *self, ARM64InstructionCTX *instCTX) {
@@ -226,10 +219,9 @@ void arm64_assembly_relocator_cclass(rewrite_B)(ARM64Relocator *self, ARM64Instr
 
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, ARM64_REG_X17, 0x8);
     arm64_assembly_writer_cclass(put_br_reg)(self->output, ARM64_REG_X17);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
-
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&target_address, sizeof(zz_ptr_t));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
 }
 
 void arm64_assembly_relocator_cclass(rewrite_BL)(ARM64Relocator *self, ARM64InstructionCTX *instCTX) {
@@ -244,14 +236,13 @@ void arm64_assembly_relocator_cclass(rewrite_BL)(ARM64Relocator *self, ARM64Inst
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, ARM64_REG_X17, 0xc);
     arm64_assembly_writer_cclass(put_blr_reg)(self->output, ARM64_REG_X17);
     arm64_assembly_writer_cclass(put_b_imm)(self->output, 0xc);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
-
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&target_address, sizeof(zz_ptr_t));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
 
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(self->output, ARM64_REG_X17, 0x8);
     arm64_assembly_writer_cclass(put_br_reg)(self->output, ARM64_REG_X17);
-    arm64_assembly_relocator_cclass(register_literal_instCTX)(
-        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len))->val);
     arm64_assembly_writer_cclass(put_bytes)(self->output, (zz_ptr_t)&next_pc_address, sizeof(zz_ptr_t));
+    arm64_assembly_relocator_cclass(register_literal_instCTX)(
+        self, (ARM64InstructionCTX *)(list_at(self->output->instCTXs, self->output->instCTXs->len - 1))->val);
 }
