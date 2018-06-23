@@ -117,16 +117,29 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry
 
 ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry) {
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
+#if DYNAMIC_CLOSURE_BRIDGE
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
         DynamicClosureBridgeInfo *dcbInfo;
         DynamicClosureBridge *dcb = DynamicClosureBridgeCClass(SharedInstance)();
         DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(dcb, entry,
-                                                                 (void *)interceptor_routing_begin_bridge_handler);
+                                                                 (void *)interceptor_routing_begin_dynamic_bridge_handler);
         if (dcbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
         entry->on_enter_trampoline = dcbInfo->redirect_trampoline;
     }
+#else
+    if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
+        ClosureBridgeInfo *cbInfo;
+        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
+        ClosureBridgeCClass(AllocateClosureBridge)(cb, entry,
+                                                                 (void *)interceptor_routing_begin_bridge_handler);
+        if (cbInfo == NULL) {
+            ERROR_LOG_STR("build closure bridge failed!!!");
+        }
+        entry->on_enter_trampoline = cbInfo->redirect_trampoline;
+    }
+#endif
     if (entry->type != HOOK_TYPE_FUNCTION_via_GOT) {
         ClosureBridgeInfo *cbInfo;
         ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
@@ -179,6 +192,7 @@ ARCH_API void interceptor_trampoline_cclass(build_for_invoke)(hook_entry_t *entr
 ARCH_API void interceptor_trampoline_cclass(build_for_leave)(hook_entry_t *entry) {
 
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
+#if DYNAMIC_CLOSURE_BRIDGE
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
         DynamicClosureBridgeInfo *dcbInfo;
         DynamicClosureBridge *dcb = DynamicClosureBridgeCClass(SharedInstance)();
@@ -189,6 +203,18 @@ ARCH_API void interceptor_trampoline_cclass(build_for_leave)(hook_entry_t *entry
         }
         entry->on_enter_trampoline = dcbInfo->redirect_trampoline;
     }
+#else
+    if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
+        ClosureBridgeInfo *cbInfo;
+        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
+        cbInfo                   = ClosureBridgeCClass(AllocateClosureBridge)(
+                cb, entry, (void *)interceptor_routing_end_bridge_handler);
+        if (cbInfo == NULL) {
+            ERROR_LOG_STR("build closure bridge failed!!!");
+        }
+        entry->on_enter_trampoline = cbInfo->redirect_trampoline;
+    }
+#endif
     if (entry->type != HOOK_TYPE_FUNCTION_via_GOT) {
         ClosureBridgeInfo *cbInfo;
         ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();

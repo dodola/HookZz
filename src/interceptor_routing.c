@@ -88,6 +88,7 @@ void interceptor_routing_common_bridge_handler(RegState *rs, ClosureBridgeInfo *
     return;
 }
 
+#if DYNAMIC_CLOSURE_BRIDGE
 void interceptor_routing_begin_dynamic_bridge_handler(RegState *rs, DynamicClosureBridgeInfo *dcb_info) {
     hook_entry_t *entry     = dcb_info->user_data;
     void *next_hop_addr_PTR = get_next_hop_addr_PTR(rs);
@@ -108,3 +109,4 @@ void interceptor_routing_dynamic_common_bridge_handler(RegState *rs, DynamicClos
     userCodeCall(rs, dcb_info);
     return;
 }
+#endif

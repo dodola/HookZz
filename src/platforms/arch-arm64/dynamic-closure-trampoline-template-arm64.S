@@ -1,3 +1,5 @@
+#if DYNAMIC_CLOSURE_BRIDGE
+
 // .section	__TEXT,__text,regular,pure_instructions
 // .ios_version_min 11, 0
 
@@ -23,3 +25,5 @@ sub x14, x14, #0x4000 // [DynamicClosureTrampoline **]
 ldr x14, [x14, #0] // [DynamicClosureTrampoline *]
 ldr x15, [x14, #0] // trampolineTo 
 br x15
+
+#endif

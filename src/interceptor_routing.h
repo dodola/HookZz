@@ -23,9 +23,12 @@ void interceptor_routing_dynamic_binary_instrumentation_bridge_handler(RegState 
 
 void interceptor_routing_common_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info);
 
+#if DYNAMIC_CLOSURE_BRIDGE
 void interceptor_routing_begin_dynamic_bridge_handler(RegState *rs, DynamicClosureBridgeInfo *dcb_info);
 
 void interceptor_routing_end_dynamic_bridge_handler(RegState *rs, DynamicClosureBridgeInfo *dcb_info);
 
 void interceptor_routing_dynamic_common_bridge_handler(RegState *rs, DynamicClosureBridgeInfo *dcb_info);
+#endif
+
 #endif

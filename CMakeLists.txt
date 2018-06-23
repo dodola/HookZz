@@ -28,6 +28,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(HookZz)
 
+include(cmake/Macros.cmake)
 include(cmake/Util.cmake)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -36,12 +37,21 @@ enable_language(ASM)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-set(CMAKE_ASM_FLAGS "-arch arm64")
 # set(CMAKE_ASM_FLAGS "-arch arm64 -fembed-bitcode")
-
 
 option(CXX ON "use cxx source")
 option(SHAREDLIB ON "build shared library")
+option(A64 ON "build ARM64 architecture")
+option(USE_POSIX_IN_DARWIN OFF "use posix function in darwin")
+
+add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=0)
+
+if(A64)
+    set(CMAKE_ASM_FLAGS "-arch arm64")
+else()
+    set(CMAKE_ASM_FLAGS "-arch armv7")
+endif()
+
 
 set(GLOBAL.SOURCE_FILE)
 set(GLOBAL.SOURCE_DIR)
@@ -49,50 +59,40 @@ set(GLOBAL.HEADER_FILE)
 set(GLOBAL.HEADER_DIR)
 
 if(CXX)
-    # build cxx source
-    set(HookZz.Path .)
-    set(GLOBAL.SOURCE_DIR
-            ${HookZz.Path}/srcxx
-            ${HookZz.Path}/srcxx/CommonClass
-            ${HookZz.Path}/srcxx/CommonClass/DesignPattern
-            ${HookZz.Path}/srcxx/Platforms
-            ${HookZz.Path}/srcxx/Platforms/arch-arm64
-            ${HookZz.Path}/srcxx/Platforms/backend-darwin
-            ${HookZz.Path}/srcxx/Platforms/backend-posix
-            )
-
-    set(GLOBAL.HEADER_DIR
-            ${HookZz.Path}/include
-            )
-
-    # *.cpp
-    search_suffix_files("cpp" GLOBAL.SOURCE_DIR HookZz.SOURCE_CPP)
-
-    # *.c
-    search_suffix_files("c" GLOBAL.SOURCE_DIR HookZz.SOURCE_C)
-
-    # *.S
-    search_suffix_files("S" GLOBAL.SOURCE_DIR HookZz.SOURCE_ASSEMBLY)
-
-    # *.h
-    search_suffix_files("h" GLOBAL.SOURCE_DIR HookZz.HEADER_H)
-
-    set(GLOBAL.SOURCE_FILE ${GLOBAL.SOURCE_FILE} ${HookZz.SOURCE_CPP} ${HookZz.SOURCE_C} ${HookZz.SOURCE_ASSEMBLY})
-    set(GLOBAL.HEADER_FILE ${GLOBAL.HEADER_FILE} ${HookZz.HEADER_H})
 else()
     # build c source
     set(HookZz.Path .)
     set(GLOBAL.SOURCE_DIR
             ${HookZz.Path}/src
             ${HookZz.Path}/src/std_kit
-            ${HookZz.Path}/src/platforms/arch-arm64
-            ${HookZz.Path}/src/platforms/backend-darwin
-            ${HookZz.Path}/src/platforms/backend-posix
             )
 
     set(GLOBAL.HEADER_DIR
             ${HookZz.Path}/include
             )
+    
+    if(SYSTEM.Android)
+        set(GLOBAL.SOURCE_DIR ${GLOBAL.SOURCE_DIR}
+            ${HookZz.Path}/src/platforms/backend-posix
+            ${HookZz.Path}/src/platforms/backend-linux
+            )
+    elseif(SYSTEM.Darwin)
+        set(GLOBAL.SOURCE_DIR ${GLOBAL.SOURCE_DIR}
+            ${HookZz.Path}/src/platforms/backend-posix
+            ${HookZz.Path}/src/platforms/backend-darwin
+            )
+            add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=1)
+        if(USE_POSIX_IN_DARWIN)
+            add_definitions(-DUSE_POSIX_IN_DARWIN=1)
+        else()
+            add_definitions(-DUSE_POSIX_IN_DARWIN=0)
+        endif()
+    endif()
+    if(PROCESSOR.aarch64)
+        set(GLOBAL.SOURCE_DIR ${GLOBAL.SOURCE_DIR}
+            ${HookZz.Path}/src/platforms/arch-arm64
+            )
+    endif()
 
     # *.c
     search_suffix_files("c" GLOBAL.SOURCE_DIR HookZz.SOURCE_C)

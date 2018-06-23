@@ -1,4 +1,4 @@
-#include "dynamic-closure-bridge-darwin.h"
+#include "closure_bridge.h"
 
 DynamicClosureBridge *DynamicClosureBridgeCClass(SharedInstance)() { return NULL; }
 DynamicClosureBridgeInfo *DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(DynamicClosureBridge *self,

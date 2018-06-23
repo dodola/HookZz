@@ -10,22 +10,6 @@
 
 PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
 
-PLATFORM_API int memory_manager_cclass(get_page_size)() { return darwin_memory_helper_cclass(get_page_size)(); }
-
-PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
-    vm_address_t page_address;
-    kern_return_t kr;
-    vm_size_t page_size;
-
-    page_size = darwin_memory_helper_cclass(get_page_size)();
-    /* use vm_allocate not mmap */
-    kr = mach_vm_allocate(mach_task_self(), (mach_vm_address_t *)&page_address, page_size * n, VM_FLAGS_ANYWHERE);
-    /* set page permission */
-    darwin_memory_helper_cclass(set_page_memory_permission)((void *)page_address, 1 | 2);
-
-    return (void *)page_address;
-}
-
 PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self) {
 
     mach_msg_type_number_t count;
@@ -60,6 +44,26 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
     }
 }
 
+#if NOT USE_POSIX_IN_DARWIN
+PLATFORM_API int memory_manager_cclass(get_page_size)() { return darwin_memory_helper_cclass(get_page_size)(); }
+#endif
+
+#if NOT USE_POSIX_IN_DARWIN
+PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
+    vm_address_t page_address;
+    kern_return_t kr;
+    vm_size_t page_size;
+
+    page_size = darwin_memory_helper_cclass(get_page_size)();
+    /* use vm_allocate not mmap */
+    kr = mach_vm_allocate(mach_task_self(), (mach_vm_address_t *)&page_address, page_size * n, VM_FLAGS_ANYWHERE);
+    /* set page permission */
+    darwin_memory_helper_cclass(set_page_memory_permission)((void *)page_address, 1 | 2);
+
+    return (void *)page_address;
+}
+#endif
+#if NOT USE_POSIX_IN_DARWIN
 /*
   REF:
   substitute/lib/darwin/execmem.c:execmem_foreign_write_with_pc_patch
@@ -72,7 +76,6 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
 
   http://shakthimaan.com/downloads/hurd/A.Programmers.Guide.to.the.Mach.System.Calls.pdf
 */
-
 PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count) {
 
     vm_address_t dest_page;
@@ -134,3 +137,4 @@ PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void
         // LOG-NEED
     }
 }
+#endif

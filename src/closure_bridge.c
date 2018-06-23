@@ -44,7 +44,7 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
         table = ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(self);
     }
 
-    ClosureBridgeCClass(InitializeClosureBridgeInfo)(table, cb_info);
+    ClosureBridgeCClass(InitializeClosureBridgeInfo)(table, cb_info, user_data, user_code);
 
     list_rpush(self->bridge_infos, list_node_new(cb_info));
     return cb_info;
