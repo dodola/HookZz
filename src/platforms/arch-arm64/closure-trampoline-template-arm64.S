@@ -19,6 +19,7 @@ cdecl(closure_bridge_trampoline_template):
     .long 0
     .long 0
 
+
 #if 0
 .globl cdecl(closure_bridge_template)
 cdecl(closure_bridge_template):

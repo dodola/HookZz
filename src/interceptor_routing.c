@@ -48,13 +48,13 @@ void interceptor_routing_end(RegState *rs, hook_entry_t *entry, void *next_hop_a
 void interceptor_routing_dynamic_binary_instrumentation(RegState *rs, hook_entry_t *entry, void *next_hop_addr_PTR) {
     // DEBUG_LOG("target %p call dynamic-binary-instrumentation-invocation", entry->target_ptr);
 
-    if (entry->stub_call) {
-        STUBCALL stub_call;
+    if (entry->dbi_call) {
+        DBICALL dbi_call;
         HookEntryInfo entryInfo;
         entryInfo.hook_id      = entry->id;
         entryInfo.hook_address = entry->target_address;
-        stub_call              = entry->stub_call;
-        (*stub_call)(rs, (const HookEntryInfo *)&entryInfo);
+        dbi_call               = entry->dbi_call;
+        (*dbi_call)(rs, (const HookEntryInfo *)&entryInfo);
     }
 
     *(zz_ptr_t *)next_hop_addr_PTR = entry->on_invoke_trampoline;

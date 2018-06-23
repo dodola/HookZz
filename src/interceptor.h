@@ -28,7 +28,7 @@ typedef struct _hook_entry_t {
 
     PRECALL pre_call;
     POSTCALL post_call;
-    STUBCALL stub_call;
+    DBICALL dbi_call;
     void *replace_call;
 
     void *on_enter_transfer_trampoline;

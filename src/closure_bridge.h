@@ -32,7 +32,12 @@ typedef struct _ClosureBridge {
 
 ClosureBridge *ClosureBridgeCClass(SharedInstance)();
 ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *self, void *user_data, void *user_code);
+
 ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(ClosureBridge *self);
+ARCH_API void ClosureBridgeCClass(InitializeTablePage)(ClosureBridgeTrampolineTable *table, void *page_address);
+ARCH_API void ClosureBridgeCClass(InitializeClosureBridgeInfo)(ClosureBridgeTrampolineTable *table,
+                                                               ClosureBridgeInfo *cb_info, void *user_code,
+                                                               void *user_data);
 
 // dynamic closure bridge
 typedef struct _DynamicClosureBridgeInfo {

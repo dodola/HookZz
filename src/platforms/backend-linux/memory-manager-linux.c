@@ -6,8 +6,11 @@ PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(me
 PLATFORM_API static int memory_manager_cclass(get_page_size)() { return 0x4000; }
 
 PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
-    // TODO
-    return NULL;
+    int page_size = posix_memory_helper_class(get_page_size)();
+
+    void *mmap_page = mmap(0, 1, PROT_WRITE | PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    mprotect(mmap_page, (size_t)page_size, (PROT_READ | PROT_WRITE));
+    return mmap_page;
 }
 
 PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void *dest, void *src, int count) {

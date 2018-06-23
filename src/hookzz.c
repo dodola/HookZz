@@ -14,13 +14,29 @@ RetStatus ZzHook(void *target_address, void *replace_call, void **origin_call, P
 
     hook_entry_t *entry   = SAFE_MALLOC_TYPE(hook_entry_t);
     entry->target_address = target_address;
+    entry->type           = type;
     entry->replace_call   = replace_call;
     entry->pre_call       = pre_call;
     entry->post_call      = post_call;
 
-    // interceptor_t *interceptor = interceptor_t::GETInstance();
-    // interceptor->addHookEntry(entry);
-    // interceptor->backend->BuildAllTrampoline(entry);
-    // interceptor->backend->ActiveTrampoline(entry);
+    interceptor_t *interceptor = interceptor_cclass(shared_instance)();
+    interceptor_cclass(add_hook_entry)(interceptor, entry);
+    interceptor_trampoline_cclass(build_all)(entry);
+    interceptor_trampoline_cclass(active)(entry);
+
+    return RS_SUCCESS;
+}
+
+RetStatus ZzDynamicBinaryInstrumentation(void *inst_address, DBICALL dbi_call) {
+    hook_entry_t *entry   = SAFE_MALLOC_TYPE(hook_entry_t);
+    entry->target_address = inst_address;
+    entry->type           = HOOK_TYPE_DBI;
+    entry->dbi_call       = dbi_call;
+
+    interceptor_t *interceptor = interceptor_cclass(shared_instance)();
+    interceptor_cclass(add_hook_entry)(interceptor, entry);
+    interceptor_trampoline_cclass(build_all)(entry);
+    interceptor_trampoline_cclass(active)(entry);
+
     return RS_SUCCESS;
 }

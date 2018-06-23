@@ -147,45 +147,12 @@ typedef struct _HookEntryInfo {
 
 typedef void (*PRECALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
 typedef void (*POSTCALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
-typedef void (*STUBCALL)(RegState *rs, const HookEntryInfo *info);
-
-#define STACK_CHECK_KEY(cs, key) (bool)CallStackGetThreadLocalData(cs, key)
-#define STACK_GET(cs, key, type) *(type *)CallStackGetThreadLocalData(cs, key)
-#define STACK_SET(cs, key, value, type) CallStackSetThreadLocalData(cs, key, &(value), sizeof(type))
-
-void *CallStackGetThreadLocalData(CallStackPublic *callstack_ptr, char *key_str);
-bool CallStackSetThreadLocalData(CallStackPublic *callstack_ptr, char *key_str, void *value_ptr, unsigned long value_size);
+typedef void (*DBICALL)(RegState *rs, const HookEntryInfo *info);
 
 RetStatus ZzHook(void *target_address, void *replace_call, void **origin_call, PRECALL pre_call,
                     POSTCALL post_call) ;
-RetStatus ZzHookPrePost(void *target_ptr, PRECALL pre_call_ptr, POSTCALL post_call_ptr);
-RetStatus ZzHookReplace(void *target_ptr, void *replace_call, void **origin_call_ptr);
-
-// got hook (only support darwin)
-RetStatus ZzHookGOT(void *header, const char *name, void *replace_call, void **origin_call_ptr, PRECALL pre_call_ptr, POSTCALL post_call_ptr);
-
 // dynamic binary instrumentation
-RetStatus ZzDynamicBinaryInstrumentation(void *address, STUBCALL stub_call_ptr);
-
-// hook only one instruciton with instruction address
-// void ZzHookSingleInstruction(void *insn_address, PRECALL pre_call_ptr, POSTCALL post_call_ptr, bool try_near_jump);
-
-// runtime code patch
-RetStatus ZzRuntimeCodePatch(void *address, void *code_data, unsigned long code_length);
-
-// disable hook
-RetStatus ZzDisableHook(void *target_ptr);
-
-#if defined(__arm64__) || defined(__aarch64__)
-    #if defined(__APPLE__) && defined(__MACH__)
-        #define iOS 1
-    #endif
-#endif
-
-#ifdef TARGET_IS_IOS
-RetStatus StaticBinaryInstrumentation(void *target_fileoff, void *replace_call_ptr, void **origin_call_ptr, PRECALL pre_call_ptr,
-                        POSTCALL post_call_ptr);
-#endif
+RetStatus ZzDynamicBinaryInstrumentation(void *inst_address, DBICALL dbi_call);
 
 #ifdef __cplusplus
 }

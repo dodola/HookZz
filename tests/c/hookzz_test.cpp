@@ -173,7 +173,7 @@ TEST_CASE(">>> ARM64Relocator", "[relocator]") {
         // printf("0x%02x 0x%02x 0x%02x 0x%02x ", (uint8_t)instCTX->bytes, (uint8_t)(instCTX->bytes >> 8), (uint8_t)(instCTX->bytes >> 16), (uint8_t)(instCTX->bytes >> 24));
     }
 
-    // relocate `b #0x20`
+    // relocate `cbz x0, #0x20`
     arm64_assembly_reader_cclass(read_inst)(reader_arm64);
     arm64_assembly_relocator_cclass(relocate_write)(relocator_arm64);
     count    = get_input_relocate_ouput_count(relocator_arm64, 3);

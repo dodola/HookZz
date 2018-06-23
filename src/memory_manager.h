@@ -46,9 +46,11 @@ extern "C" {
 
 memory_manager_t *memory_manager_cclass(shared_instance)();
 
-PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
-
 PLATFORM_API int memory_manager_cclass(get_page_size)();
+
+PLATFORM_API int memory_manager_cclass(set_page_permissoin)();
+
+PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
 
 PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n);
 
