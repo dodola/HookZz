@@ -28,7 +28,7 @@ typedef struct _ClosureBridge {
     list_t *trampoline_tables;
 } ClosureBridge;
 
-#define ClosureBridgeCClass(member) cclass(ClosureBridge, member)
+#define ClosureBridgeCClass(member) cxxclass(ClosureBridge, member)
 
 ClosureBridge *ClosureBridgeCClass(SharedInstance)();
 ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *self, void *user_data, void *user_code);

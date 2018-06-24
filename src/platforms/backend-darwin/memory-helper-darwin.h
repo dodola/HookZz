@@ -18,6 +18,6 @@ int darwin_memory_helper_cclass(get_page_size)();
 
 void darwin_memory_helper_cclass(get_memory_info)(void *address, vm_prot_t *prot, vm_inherit_t *inherit);
 
-void darwin_memory_helper_cclass(set_page_memory_permission)(void *address, int prot);
+void darwin_memory_helper_cclass(set_page_permission)(void *address, int prot, int n);
 
 #endif

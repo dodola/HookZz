@@ -1,11 +1,12 @@
 #include "closure_bridge.h"
+#include "core.h"
 #include "memory_manager.h"
 
 #define closure_bridge_trampoline_template_length (7 * 4)
 
 void ClosureBridgeCClass(InitializeTablePage)(ClosureBridgeTrampolineTable *table, void *page_address) {
     memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
-    memory_manager_cclass(set_page_permission)(page_address, 1  | 4, 1);
+    memory_manager_cclass(set_page_permission)(page_address, PROT_RW_, 1);
 
     int page_size = memory_manager_cclass(get_page_size)();
 
@@ -16,7 +17,7 @@ void ClosureBridgeCClass(InitializeTablePage)(ClosureBridgeTrampolineTable *tabl
         memcpy(copy_address, (void *)closure_bridge_trampoline_template, closure_bridge_trampoline_template_length);
     }
 
-    memory_manager_cclass(set_page_permission)(page_address, 1 | 2, 1);
+    memory_manager_cclass(set_page_permission)(page_address, PROT_R_X, 1);
 
     table->entry           = page_address;
     table->trampoline_page = page_address;
@@ -25,12 +26,13 @@ void ClosureBridgeCClass(InitializeTablePage)(ClosureBridgeTrampolineTable *tabl
 }
 
 void ClosureBridgeCClass(InitializeClosureBridgeInfo)(ClosureBridgeTrampolineTable *table, ClosureBridgeInfo *cb_info,
-                                                      void *user_code, void *user_data) {
+                                                      void *user_data, void *user_code) {
+    assert(cb_info);
+    assert(table);
     uint16_t trampoline_used_count = table->used_count;
     void *redirect_trampoline =
         (void *)((intptr_t)table->trampoline_page + closure_bridge_trampoline_template_length * trampoline_used_count);
 
-    cb_info                      = SAFE_MALLOC_TYPE(ClosureBridgeInfo);
     cb_info->user_code           = user_code;
     cb_info->user_data           = user_data;
     cb_info->redirect_trampoline = redirect_trampoline;
@@ -38,7 +40,7 @@ void ClosureBridgeCClass(InitializeClosureBridgeInfo)(ClosureBridgeTrampolineTab
     table->used_count++;
     table->free_count--;
 
-    memory_manager_cclass(set_page_permission)(table->trampoline_page, 1 | 4, 1);
+    memory_manager_cclass(set_page_permission)(table->trampoline_page, PROT_RW_, 1);
 
     // bind data to trampline
     void *tmp = (void *)((intptr_t)cb_info->redirect_trampoline + 4 * 3);
@@ -49,5 +51,5 @@ void ClosureBridgeCClass(InitializeClosureBridgeInfo)(ClosureBridgeTrampolineTab
     tmp        = (void *)((intptr_t)cb_info->redirect_trampoline + 4 * 5);
     memcpy(tmp, &tmpX, sizeof(void *));
 
-    memory_manager_cclass(set_page_permission)(table->trampoline_page, 1 | 2, 1);
+    memory_manager_cclass(set_page_permission)(table->trampoline_page, PROT_R_X, 1);
 }

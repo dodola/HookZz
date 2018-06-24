@@ -1,7 +1,7 @@
-#include "memory_manager.h"
 #include "memory-helper-posix.h"
+#include "memory_manager.h"
 
-#if !defined(APPLE) || USE_POSIX_IN_DARWIN
+#if !defined(__APPLE__) || USE_POSIX_IN_DARWIN
 
 PLATFORM_API int memory_manager_cclass(get_page_size)() {
     int page_size;

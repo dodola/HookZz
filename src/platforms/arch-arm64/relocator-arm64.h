@@ -29,7 +29,7 @@ extern "C" {
 #endif //__cplusplus
 ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64AssemblyReader *input, ARM64AssemblyWriter *output);
 
-void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self);
+void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self, ARM64AssemblyReader *input, ARM64AssemblyWriter *output);
 
 void arm64_assembly_relocator_cclass(try_relocate)(void *address, int bytes_min, int *bytes_max);
 

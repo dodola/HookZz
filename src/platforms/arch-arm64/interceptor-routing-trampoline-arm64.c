@@ -3,6 +3,7 @@
 #include "interceptor.h"
 #include "interceptor_routing.h"
 #include "interceptor_routing_trampoline.h"
+#include "logging.h"
 #include "macros.h"
 #include "memory_manager.h"
 
@@ -30,6 +31,8 @@ void interceptor_cclass(initialize_interceptor_backend)(memory_manager_t *memory
 ARCH_API void interceptor_trampoline_cclass(prepare)(hook_entry_t *entry) {
     int limit_relocate_inst_size              = 0;
     hook_entry_backend_arm64_t *entry_backend = SAFE_MALLOC_TYPE(hook_entry_backend_arm64_t);
+    entry->backend                            = entry_backend;
+
     if (entry->is_try_near_jump) {
         entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
     } else {
@@ -55,35 +58,74 @@ ARCH_API void interceptor_trampoline_cclass(prepare)(hook_entry_t *entry) {
 ARCH_API void interceptor_trampoline_cclass(active)(hook_entry_t *entry) {
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
 
-    ARM64AssemblyWriter *writer_arm64;
-    writer_arm64 = arm64_assembly_writer_cclass(new)(entry->target_address);
+    ARM64AssemblyWriter *writer_arm64 = NULL;
+    writer_arm64                      = arm64_assembly_writer_cclass(new)(entry->target_address);
 
-    if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
-        if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
-            arm64_assembly_writer_cclass(put_b_imm)(writer_arm64, (zz_addr_t)entry->on_enter_transfer_trampoline -
-                                                                      (zz_addr_t)writer_arm64->start_pc);
-        } else {
-            arm64_assembly_writer_cclass(put_ldr_reg_imm)(writer_arm64, ARM64_REG_X17, 0x8);
-            arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
-            arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_enter_transfer_trampoline, sizeof(void *));
-        }
+    // if use near jump, all is same
+    if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
+        arm64_assembly_writer_cclass(put_b_imm)(writer_arm64, (zz_addr_t)entry->on_enter_transfer_trampoline -
+                                                                  (zz_addr_t)writer_arm64->start_pc);
     } else {
-        if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
-            arm64_assembly_writer_cclass(put_b_imm)(writer_arm64, (zz_addr_t)entry->on_enter_transfer_trampoline -
-                                                                      (zz_addr_t)writer_arm64->start_pc);
+        arm64_assembly_writer_cclass(put_ldr_reg_imm)(writer_arm64, ARM64_REG_X17, 0x8);
+        arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
+        if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
+            arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_enter_transfer_trampoline, sizeof(void *));
+        } else if (entry->type == HOOK_TYPE_DBI) {
+            arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_dynamic_binary_instrumentation_trampoline,
+                                                    sizeof(void *));
         } else {
-            arm64_assembly_writer_cclass(put_ldr_reg_imm)(writer_arm64, ARM64_REG_X17, 0x8);
-            arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
             arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_enter_trampoline, sizeof(void *));
         }
     }
+    memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
+    memory_manager_cclass(patch_code)(memory_manager, entry->target_address, writer_arm64->inst_bytes->data,
+                                      writer_arm64->inst_bytes->size);
     arm64_assembly_writer_cclass(destory)(writer_arm64);
+
+    {
+        char buffer[1024] = {};
+        sprintf(buffer + strlen(buffer), "\n======= Logging ======= \n");
+        sprintf(buffer + strlen(buffer), "\tTargetAddress: %p\n", entry->target_address);
+
+        sprintf(buffer + strlen(buffer), "\tArchitecture: ARM64\n");
+        if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
+            sprintf(buffer + strlen(buffer), "\tBrachJumpType: Near Jump(B xxx)\n");
+        } else if (entry_backend->limit_relocate_inst_size == ARM64_FULL_REDIRECT_SIZE) {
+            sprintf(buffer + strlen(buffer), "\ttBrachJumpType: Abs Jump(ldr r17, #4; .long address)\n");
+        }
+
+        if (entry->is_near_jump && entry->on_enter_transfer_trampoline)
+            sprintf(buffer + strlen(buffer), "\ton_enter_transfer_trampoline: %p\n",
+                    entry->on_enter_transfer_trampoline);
+
+        if (entry->type == HOOK_TYPE_DBI) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_DBI\n");
+            sprintf(buffer + strlen(buffer), "\ton_dynamic_binary_instrumentation_trampoline: %p\n",
+                    entry->on_dynamic_binary_instrumentation_trampoline);
+            sprintf(buffer + strlen(buffer), "\ton_invoke_trampoline: %p\n", entry->on_invoke_trampoline);
+        } else if (entry->type == HOOK_TYPE_FUNCTION_via_PRE_POST) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_FUNCTION_via_PRE_POST\n");
+            sprintf(buffer + strlen(buffer), "\ton_enter_trampoline: %p\n", entry->on_enter_trampoline);
+            sprintf(buffer + strlen(buffer), "\ton_leave_trampoline: %p\n", entry->on_leave_trampoline);
+            sprintf(buffer + strlen(buffer), "\ton_invoke_trampoline: %p\n", entry->on_invoke_trampoline);
+        } else if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_FUNCTION_via_REPLACE\n");
+            sprintf(buffer + strlen(buffer), "\ton_enter_transfer_trampoline: %p\n",
+                    entry->on_enter_transfer_trampoline);
+            sprintf(buffer + strlen(buffer), "\ton_invoke_trampoline: %p\n", entry->on_invoke_trampoline);
+        } else if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_FUNCTION_via_GOT\n");
+            sprintf(buffer + strlen(buffer), "\ton_enter_trampoline: %p\n", entry->on_enter_trampoline);
+            sprintf(buffer + strlen(buffer), "\ton_leave_trampoline: %p\n", entry->on_leave_trampoline);
+        }
+        Logging("%s", buffer);
+    }
 }
 
 ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry_t *entry) {
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
-    ARM64AssemblyWriter *writer_arm64;
-    writer_arm64 = arm64_assembly_writer_cclass(new)(0);
+    ARM64AssemblyWriter *writer_arm64         = NULL;
+    writer_arm64                              = arm64_assembly_writer_cclass(new)(0);
 
     arm64_assembly_writer_cclass(put_ldr_reg_imm)(writer_arm64, ARM64_REG_X17, 0x8);
     arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
@@ -98,7 +140,7 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry
 
     memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
     if (entry_backend->limit_relocate_inst_size == ARM64_TINY_REDIRECT_SIZE) {
-        CodeCave *cc;
+        CodeCave *cc = NULL;
         cc = memory_manager_cclass(search_code_cave)(memory_manager, entry->target_address, ARM64_TINY_REDIRECT_SIZE,
                                                      writer_arm64->inst_bytes->size);
         XCHECK(cc);
@@ -106,8 +148,8 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry
         entry->on_enter_transfer_trampoline = (void *)cc->address;
         SAFE_FREE(cc);
     } else {
-        CodeSlice *cs;
-        cs = memory_manager_cclass(allocate_code_slice)(memory_manager, writer_arm64->inst_bytes->size);
+        CodeSlice *cs = NULL;
+        cs            = memory_manager_cclass(allocate_code_slice)(memory_manager, writer_arm64->inst_bytes->size);
         XCHECK(cs);
         arm64_assembly_writer_cclass(patch_to)(writer_arm64, cs->data);
         entry->on_enter_transfer_trampoline = (void *)cs->data;
@@ -119,10 +161,10 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
 #if DYNAMIC_CLOSURE_BRIDGE
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
-        DynamicClosureBridgeInfo *dcbInfo;
-        DynamicClosureBridge *dcb = DynamicClosureBridgeCClass(SharedInstance)();
-        DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(dcb, entry,
-                                                                 (void *)interceptor_routing_begin_dynamic_bridge_handler);
+        DynamicClosureBridgeInfo *dcbInfo = NULL;
+        DynamicClosureBridge *dcb         = DynamicClosureBridgeCClass(SharedInstance)();
+        DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(
+            dcb, entry, (void *)interceptor_routing_begin_dynamic_bridge_handler);
         if (dcbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
@@ -130,10 +172,9 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry
     }
 #else
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
-        ClosureBridgeInfo *cbInfo;
-        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
-        ClosureBridgeCClass(AllocateClosureBridge)(cb, entry,
-                                                                 (void *)interceptor_routing_begin_bridge_handler);
+        ClosureBridgeInfo *cbInfo = NULL;
+        ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
+        ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
         if (cbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
@@ -141,8 +182,8 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry
     }
 #endif
     if (entry->type != HOOK_TYPE_FUNCTION_via_GOT) {
-        ClosureBridgeInfo *cbInfo;
-        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
+        ClosureBridgeInfo *cbInfo = NULL;
+        ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
         ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
 
         if (cbInfo == NULL) {
@@ -168,8 +209,9 @@ ARCH_API void interceptor_trampoline_cclass(build_for_invoke)(hook_entry_t *entr
     ARM64Relocator *relocator_arm64   = arm64_assembly_relocator_cclass(new)(reader_arm64, writer_arm64);
 
     do {
+        arm64_assembly_reader_cclass(read_inst)(relocator_arm64->input);
         arm64_assembly_relocator_cclass(relocate_write)(relocator_arm64);
-    } while (relocator_arm64->io_indexs->len < relocator_arm64->input->instCTXs->len);
+    } while (relocator_arm64->input->inst_bytes->size < entry_backend->limit_relocate_inst_size);
 
     assert(entry_backend->limit_relocate_inst_size == relocator_arm64->input->inst_bytes->size);
 
@@ -179,13 +221,13 @@ ARCH_API void interceptor_trampoline_cclass(build_for_invoke)(hook_entry_t *entr
     arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &origin_next_inst_addr, sizeof(void *));
 
     memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
-    CodeSlice *cs;
+    CodeSlice *cs                    = NULL;
     cs = memory_manager_cclass(allocate_code_slice)(memory_manager, relocator_arm64->output->inst_bytes->size);
     XCHECK(cs);
 
     arm64_assembly_relocator_cclass(double_write)(relocator_arm64, cs->data);
     arm64_assembly_writer_cclass(patch_to)(relocator_arm64->output, cs->data);
-    entry->on_enter_transfer_trampoline = (void *)cs->data;
+    entry->on_invoke_trampoline = (void *)cs->data;
     SAFE_FREE(cs);
 }
 
@@ -194,30 +236,29 @@ ARCH_API void interceptor_trampoline_cclass(build_for_leave)(hook_entry_t *entry
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
 #if DYNAMIC_CLOSURE_BRIDGE
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
-        DynamicClosureBridgeInfo *dcbInfo;
-        DynamicClosureBridge *dcb = DynamicClosureBridgeCClass(SharedInstance)();
-        dcbInfo                   = DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(
+        DynamicClosureBridgeInfo *dcbInfo = NULL;
+        DynamicClosureBridge *dcb         = DynamicClosureBridgeCClass(SharedInstance)();
+        dcbInfo                           = DynamicClosureBridgeCClass(AllocateDynamicClosureBridge)(
             dcb, entry, (void *)interceptor_routing_end_dynamic_bridge_handler);
         if (dcbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
-        entry->on_enter_trampoline = dcbInfo->redirect_trampoline;
+        entry->on_leave_trampoline = dcbInfo->redirect_trampoline;
     }
 #else
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
-        ClosureBridgeInfo *cbInfo;
-        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
-        cbInfo                   = ClosureBridgeCClass(AllocateClosureBridge)(
-                cb, entry, (void *)interceptor_routing_end_bridge_handler);
+        ClosureBridgeInfo *cbInfo = NULL;
+        ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
+        cbInfo = ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_end_bridge_handler);
         if (cbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
-        entry->on_enter_trampoline = cbInfo->redirect_trampoline;
+        entry->on_leave_trampoline = cbInfo->redirect_trampoline;
     }
 #endif
     if (entry->type != HOOK_TYPE_FUNCTION_via_GOT) {
-        ClosureBridgeInfo *cbInfo;
-        ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
+        ClosureBridgeInfo *cbInfo = NULL;
+        ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
         cbInfo = ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_end_bridge_handler);
 
         if (cbInfo == NULL) {
@@ -229,9 +270,9 @@ ARCH_API void interceptor_trampoline_cclass(build_for_leave)(hook_entry_t *entry
 
 ARCH_API void interceptor_trampoline_cclass(build_for_dynamic_binary_instrumentation)(hook_entry_t *entry) {
     hook_entry_backend_arm64_t *entry_backend = (hook_entry_backend_arm64_t *)entry->backend;
-    ClosureBridgeInfo *cbInfo;
-    ClosureBridge *cb = ClosureBridgeCClass(SharedInstance)();
-    cbInfo            = ClosureBridgeCClass(AllocateClosureBridge)(
+    ClosureBridgeInfo *cbInfo                 = NULL;
+    ClosureBridge *cb                         = ClosureBridgeCClass(SharedInstance)();
+    cbInfo                                    = ClosureBridgeCClass(AllocateClosureBridge)(
         cb, entry, (void *)interceptor_routing_dynamic_binary_instrumentation_bridge_handler);
 
     if (cbInfo == NULL) {

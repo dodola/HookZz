@@ -4,8 +4,11 @@
 #include "core.h"
 #include "hookzz.h"
 #include "std_kit/std_list.h"
-
 #include <stdint.h>
+
+// memory permission prot
+#define PROT_RW_ (1 | 2)
+#define PROT_R_X (1 | 4)
 
 typedef struct _CodeSlice {
     void *data;
@@ -50,7 +53,7 @@ PLATFORM_API int memory_manager_cclass(get_page_size)();
 
 PLATFORM_API void memory_manager_cclass(set_page_permission)(void *page_address, int prot, int n);
 
-PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
+PLATFORM_API bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self);
 
 PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n);
 

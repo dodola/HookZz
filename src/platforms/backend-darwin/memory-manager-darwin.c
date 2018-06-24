@@ -6,9 +6,10 @@
 
 #include "mach_vm.h"
 #include "memory-helper-darwin.h"
-#include "memory-manager-darwin.h"
+#include "memory_manager.h"
+#include "core.h"
 
-PLATFORM_API static bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
+PLATFORM_API bool memory_manager_cclass(is_support_allocate_rx_memory)(memory_manager_t *self) { return true; }
 
 PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manager_t *self) {
 
@@ -44,11 +45,21 @@ PLATFORM_API void memory_manager_cclass(get_process_memory_layout)(memory_manage
     }
 }
 
-#if NOT USE_POSIX_IN_DARWIN
-PLATFORM_API int memory_manager_cclass(get_page_size)() { return darwin_memory_helper_cclass(get_page_size)(); }
+#if !USE_POSIX_IN_DARWIN
+PLATFORM_API int memory_manager_cclass(get_page_size)() {
+    int page_size = darwin_memory_helper_cclass(get_page_size)();
+    return page_size;
+}
 #endif
 
-#if NOT USE_POSIX_IN_DARWIN
+#if !USE_POSIX_IN_DARWIN
+PLATFORM_API void memory_manager_cclass(set_page_permission)(void *page_address, int prot, int n) {
+    darwin_memory_helper_cclass(set_page_permission)(page_address, prot, n);
+    return;
+}
+#endif
+
+#if !USE_POSIX_IN_DARWIN
 PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, int prot, int n) {
     vm_address_t page_address;
     kern_return_t kr;
@@ -58,12 +69,13 @@ PLATFORM_API void *memory_manager_cclass(allocate_page)(memory_manager_t *self, 
     /* use vm_allocate not mmap */
     kr = mach_vm_allocate(mach_task_self(), (mach_vm_address_t *)&page_address, page_size * n, VM_FLAGS_ANYWHERE);
     /* set page permission */
-    darwin_memory_helper_cclass(set_page_memory_permission)((void *)page_address, 1 | 2);
+    darwin_memory_helper_cclass(set_page_permission)((void *)page_address, prot, n);
 
     return (void *)page_address;
 }
 #endif
-#if NOT USE_POSIX_IN_DARWIN
+
+#if !USE_POSIX_IN_DARWIN
 /*
   REF:
   substitute/lib/darwin/execmem.c:execmem_foreign_write_with_pc_patch
@@ -102,17 +114,17 @@ PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void
     //   return;
     // }
 
-    void *copy_page = memory_manager_cclass(allocate_page)(self, 3, 1);
+    void *copy_page = memory_manager_cclass(allocate_page)(self, PROT_RW_, 1);
 
     kr = vm_copy(task_self, (vm_address_t)dest_page, page_size, (vm_address_t)copy_page);
     if (kr != KERN_SUCCESS) {
-        // LOG-NEED
+        ERROR_LOG_STR("[[memory_manager_cclass(patch_code)]]");
         return;
     }
     memcpy((void *)((zz_addr_t)copy_page + offset), src, count);
 
     // SAME: mprotect(code_mmap, range_size, prot);
-    darwin_memory_helper_cclass(set_page_memory_permission)(copy_page, PROT_EXEC | PROT_READ);
+    darwin_memory_helper_cclass(set_page_permission)(copy_page, PROT_R_X, 1);
 
     // TODO: need check `memory region` again.
 
@@ -128,13 +140,14 @@ PLATFORM_API void memory_manager_cclass(patch_code)(memory_manager_t *self, void
                        /*copy*/ TRUE, &cur_protection, &max_protection, inherit);
 
     if (kr != KERN_SUCCESS) {
+        ERROR_LOG_STR("[[memory_manager_cclass(patch_code)]]");
         // LOG-NEED
     }
     // read `REF`
     // munmap(code_mmap, range_size);
     kr = mach_vm_deallocate(task_self, (mach_vm_address_t)copy_page, page_size);
     if (kr != KERN_SUCCESS) {
-        // LOG-NEED
+        ERROR_LOG_STR("[[memory_manager_cclass(patch_code)]]");
     }
 }
 #endif

@@ -1,5 +1,6 @@
 #include "register-arm64.h"
 #include "std_kit/std_kit.h"
+#include <string.h>
 
 void arm64_register_describe(ARM64Reg reg, ARM64RegInfo *ri) {
     if (reg >= ARM64_REG_X0 && reg <= ARM64_REG_X28) {

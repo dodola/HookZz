@@ -12,11 +12,11 @@ ClosureBridge *ClosureBridgeCClass(SharedInstance)() {
 }
 
 ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(ClosureBridge *self) {
-    void *mmap_page;
-    long page_size;
+    void *mmap_page = NULL;
+    long page_size  = 0;
 
     memory_manager_t *memory_manager = memory_manager_cclass(shared_instance)();
-    void *page_ptr                   = memory_manager_cclass(allocate_page)(memory_manager, 1 | 2, 1);
+    void *page_ptr                   = memory_manager_cclass(allocate_page)(memory_manager, PROT_R_X, 1);
 
     ClosureBridgeTrampolineTable *table = SAFE_MALLOC_TYPE(ClosureBridgeTrampolineTable);
 
@@ -28,8 +28,8 @@ ClosureBridgeTrampolineTable *ClosureBridgeCClass(AllocateClosureBridgeTrampolin
 }
 
 ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *self, void *user_data, void *user_code) {
-    ClosureBridgeInfo *cb_info;
-    ClosureBridgeTrampolineTable *table;
+    ClosureBridgeInfo *cb_info          = NULL;
+    ClosureBridgeTrampolineTable *table = NULL;
 
     list_iterator_t *it = list_iterator_new(self->trampoline_tables, LIST_HEAD);
     for (int i = 0; i < self->trampoline_tables->len; i++) {
@@ -44,6 +44,7 @@ ClosureBridgeInfo *ClosureBridgeCClass(AllocateClosureBridge)(ClosureBridge *sel
         table = ClosureBridgeCClass(AllocateClosureBridgeTrampolineTable)(self);
     }
 
+    cb_info = SAFE_MALLOC_TYPE(ClosureBridgeInfo);
     ClosureBridgeCClass(InitializeClosureBridgeInfo)(table, cb_info, user_data, user_code);
 
     list_rpush(self->bridge_infos, list_node_new(cb_info));

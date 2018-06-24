@@ -20,13 +20,13 @@ void darwin_memory_helper_cclass(get_memory_info)(void *address, vm_prot_t *prot
     *inherit = info.inheritance;
 }
 
-void darwin_memory_helper_cclass(set_page_memory_permission)(void *address, int prot) {
+void darwin_memory_helper_cclass(set_page_permission)(void *address, int prot, int n) {
     kern_return_t kr;
 
     int page_size = memory_manager_cclass(get_page_size)();
 
-    kr = mach_vm_protect(mach_task_self(), (vm_address_t)address, page_size, FALSE, prot);
+    kr = mach_vm_protect(mach_task_self(), (vm_address_t)address, page_size * n, FALSE, prot);
     if (kr != KERN_SUCCESS) {
-        // LOG-NEED
+        ERROR_LOG_STR("[[darwin_memory_helper_cclass(set_page_permission)]]");
     }
 }

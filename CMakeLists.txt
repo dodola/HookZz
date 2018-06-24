@@ -28,7 +28,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(HookZz)
 
-include(cmake/Macros.cmake)
+include(cmake/ios.toolchain.cmake)
 include(cmake/Util.cmake)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -37,20 +37,37 @@ enable_language(ASM)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-# set(CMAKE_ASM_FLAGS "-arch arm64 -fembed-bitcode")
+set(CMAKE_ASM_FLAGS "-arch arm64 -fembed-bitcode")
 
 option(CXX ON "use cxx source")
 option(SHAREDLIB ON "build shared library")
-option(A64 ON "build ARM64 architecture")
 option(USE_POSIX_IN_DARWIN OFF "use posix function in darwin")
 
-add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=0)
-
-if(A64)
-    set(CMAKE_ASM_FLAGS "-arch arm64")
-else()
-    set(CMAKE_ASM_FLAGS "-arch armv7")
+if(X_BACKEND STREQUAL "Darwin")
+    set(SYSTEM.Darwin 1)
+elseif(BACKEND STREQUAL "Linux")
+    set(SYSTEM.Linux 1)
 endif()
+
+if(X_PLATFORM STREQUAL "iOS")
+    set(SYSTEM.iOS 1)
+elseif(PLATFORM STREQUAL "Android")
+    set(SYSTEM.Android 1)
+else()
+    message(FATAL_ERROR "[!] ONLY SUPPORT [iOS|Android] PLATFORM")
+endif()
+
+if(X_ARCH STREQUAL "arm" OR X_ARCH STREQUAL "armv7")
+    set(CMAKE_SYSTEM_PROCESSOR arm)
+    set(PROCESSOR.arm 1)
+elseif(X_ARCH STREQUAL "aarch64" OR X_ARCH STREQUAL "arm64" OR X_ARCH STREQUAL "armv8")
+    set(CMAKE_SYSTEM_PROCESSOR aarch64)
+    set(PROCESSOR.aarch64 1)
+else()
+    message(FATAL_ERROR "[!] ONLY SUPPORT [[arm|armv7]|[aarch64|arm64|armv8]] ARCH")
+endif()
+
+include(cmake/Macros.cmake)
 
 
 set(GLOBAL.SOURCE_FILE)
@@ -76,12 +93,13 @@ else()
             ${HookZz.Path}/src/platforms/backend-posix
             ${HookZz.Path}/src/platforms/backend-linux
             )
+        add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=0)
     elseif(SYSTEM.Darwin)
         set(GLOBAL.SOURCE_DIR ${GLOBAL.SOURCE_DIR}
             ${HookZz.Path}/src/platforms/backend-posix
             ${HookZz.Path}/src/platforms/backend-darwin
             )
-            add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=1)
+        add_definitions(-DDYNAMIC_CLOSURE_BRIDGE=1)
         if(USE_POSIX_IN_DARWIN)
             add_definitions(-DUSE_POSIX_IN_DARWIN=1)
         else()

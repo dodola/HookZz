@@ -14,7 +14,7 @@ ARM64Relocator *arm64_assembly_relocator_cclass(new)(ARM64AssemblyReader *input,
     return relocator;
 }
 
-void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self) {
+void arm64_assembly_relocator_cclass(reset)(ARM64Relocator *self, ARM64AssemblyReader *input, ARM64AssemblyWriter *output) {
     arm64_assembly_reader_reset(self->input, 0, 0);
     arm64_assembly_writer_reset(self->output, 0);
 
@@ -28,8 +28,8 @@ void arm64_assembly_relocator_cclass(try_relocate)(void *address, int bytes_min,
     int tmp_size   = 0;
     bool early_end = false;
 
-    ARM64InstructionCTX *instCTX;
-    ARM64AssemblyReader *reader = arm64_assembly_reader_cclass(new)(address, address);
+    ARM64InstructionCTX *instCTX = NULL;
+    ARM64AssemblyReader *reader  = arm64_assembly_reader_cclass(new)(address, address);
 
     do {
         instCTX = arm64_assembly_reader_cclass(read_inst)(reader);
@@ -82,15 +82,18 @@ void arm64_assembly_relocator_cclass(double_write)(ARM64Relocator *self, void *t
     assert((zz_addr_t)target_address % 4 == 0);
 
     int origin_inst_buffer_size = self->output->inst_bytes->size;
-    arm64_assembly_writer_cclass(reset)(self->output, 0);
-
-    list_destroy(self->literal_instCTXs);
-    list_destroy(self->io_indexs);
+    
+    // temporary store inst buffer
+    void *tmp_inst_buffer = (void *)malloc(self->output->inst_bytes->size);
+    memcpy(tmp_inst_buffer, self->output->inst_bytes->data, self->output->inst_bytes->size);
+    
+    arm64_assembly_writer_cclass(reset)(self->output, target_address);
+    arm64_assembly_relocator_cclass(reset)(self, self->input, self->output);
 
     arm64_assembly_relocator_cclass(relocate_write_all)(self);
+    
     void *no_need_relocate_inst_buffer =
-        (void *)((zz_addr_t)self->output->inst_bytes->data + self->output->inst_bytes->size);
-
+        (void *)((zz_addr_t)tmp_inst_buffer + self->output->inst_bytes->size);
     arm64_assembly_writer_cclass(put_bytes)(self->output, no_need_relocate_inst_buffer,
                                             origin_inst_buffer_size - self->output->inst_bytes->size);
 }
@@ -102,12 +105,12 @@ void arm64_assembly_relocator_cclass(register_literal_instCTX)(ARM64Relocator *s
 void arm64_assembly_relocator_cclass(relocate_write_all)(ARM64Relocator *self) {
     do {
         arm64_assembly_relocator_cclass(relocate_write)(self);
-    } while (0);
+    } while (self->io_indexs->len < self->input->instCTXs->len);
 }
 
 void arm64_assembly_relocator_cclass(relocate_write)(ARM64Relocator *self) {
-    ARM64InstructionCTX *instCTX;
-    bool rewritten = true;
+    ARM64InstructionCTX *instCTX = NULL;
+    bool rewritten               = true;
 
     int done_relocated_input_count;
     done_relocated_input_count = self->io_indexs->len;

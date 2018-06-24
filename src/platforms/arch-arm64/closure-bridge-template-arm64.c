@@ -1,7 +1,8 @@
 
+// clang-format off
 
 #if defined(__WIN32__) || defined(__APPLE__)
-#define xcdecl(s) _##s
+#define xcdecl(s) "_" s
 #else
 #define xcdecl(s) s
 #endif
@@ -61,7 +62,7 @@ __attribute__((naked)) void closure_bridge_template() {
     // @x1: RegState stack address
     xASM("mov x0, sp");
     xASM("mov x1, x14");
-    xASM("bl "xcdecl("interceptor_routing_common_bridge_handler"));
+    xASM("bl " xcdecl("interceptor_routing_common_bridge_handler"));
 
     // ======= RegState Restore =======
     // restore x0
@@ -154,7 +155,7 @@ __attribute__((naked)) void dynamic_closure_bridge_template() {
     // @x1: RegState stack address
     xASM("mov x0, sp");
     xASM("mov x1, x14");
-    xASM("bl "xcdecl("interceptor_routing_dynamic_common_bridge_handler"));
+    xASM("bl " xcdecl("interceptor_routing_dynamic_common_bridge_handler"));
 
     // ======= RegState Restore =======
     // restore x0

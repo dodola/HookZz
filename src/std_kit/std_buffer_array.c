@@ -33,6 +33,7 @@ void buffer_array_put(buffer_array_t *self, void *data, int length) {
 
 void buffer_array_clear(buffer_array_t *self) {
     self->size = 0;
+    memset(self->data, 0, self->capacity);
     return;
 }
 

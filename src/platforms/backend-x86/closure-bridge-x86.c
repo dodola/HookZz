@@ -9,7 +9,7 @@
 
 #define closure_bridge_trampoline_template_length (7 * 4)
 
-static ClosureBridgeTrampolineTable *gClosureBridageTrampolineTable;
+static ClosureBridgeTrampolineTable *gClosureBridageTrampolineTable = NULL;
 
 void common_bridge_handler(RegState *rs, ClosureBridgeInfo *cb_info) {}
 

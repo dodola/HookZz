@@ -37,11 +37,11 @@ CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, in
 
     // allocate a new page
     if (cs == NULL) {
-        void *page_ptr       = memory_manager_cclass(allocate_page)(self, 1 | 2, 1);
+        void *page_ptr       = memory_manager_cclass(allocate_page)(self, PROT_R_X, 1);
         FreeMemoryBlock *fmb = SAFE_MALLOC_TYPE(FreeMemoryBlock);
         fmb->used_size       = 0;
         fmb->total_size      = memory_manager_cclass(get_page_size)();
-        fmb->prot            = 1 | 2;
+        fmb->prot            = PROT_R_X;
         fmb->address         = page_ptr;
         list_rpush(self->free_memory_blocks, list_node_new(fmb));
 
