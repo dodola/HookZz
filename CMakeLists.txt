@@ -32,6 +32,7 @@ include(cmake/ios.toolchain.cmake)
 include(cmake/Util.cmake)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_C_STANDARD 11)
 enable_language(ASM)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11")
@@ -69,7 +70,6 @@ endif()
 
 include(cmake/Macros.cmake)
 
-
 set(GLOBAL.SOURCE_FILE)
 set(GLOBAL.SOURCE_DIR)
 set(GLOBAL.HEADER_FILE)
@@ -82,6 +82,7 @@ else()
     set(GLOBAL.SOURCE_DIR
             ${HookZz.Path}/src
             ${HookZz.Path}/src/std_kit
+            ${HookZz.Path}/src/thread_support
             )
 
     set(GLOBAL.HEADER_DIR

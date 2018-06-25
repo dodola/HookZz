@@ -6,8 +6,6 @@
 #include "std_kit/std_list.h"
 #include "std_kit/std_map.h"
 
-static thread_local thread_stack_manager_t *thread_stack_manager;
-
 typedef struct _thread_stack_manager_t {
     int thread_id;
     list_t *call_stacks;
@@ -21,5 +19,9 @@ typedef struct _call_stack_t {
 
     map_t *context_kv;
 } call_stack_t;
+
+#define thread_stack_cclass(member) cclass(thread_stack, member)
+
+thread_stack_manager_t *thread_stack_cclass(shared_instance)();
 
 #endif

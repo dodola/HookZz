@@ -20,7 +20,7 @@ RetStatus ZzWrap(void *function_address, PRECALL pre_call, POSTCALL post_call) {
 
     initialize_hook_entry(entry);
 
-    RS_SUCCESS;
+    return RS_SUCCESS;
 }
 
 RetStatus ZzReplace(void *function_address, void *replace_call, void **origin_call) {

@@ -8,6 +8,7 @@
 
 #include "logging.h"
 #include "std_kit/std_kit.h"
+#include "std_kit/std_macros.h"
 
 /* define a macro to make abbreviation */
 #define cclass(class, member) class##_##member

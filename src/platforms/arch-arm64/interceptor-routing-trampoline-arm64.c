@@ -31,7 +31,7 @@ void interceptor_cclass(initialize_interceptor_backend)(memory_manager_t *memory
 ARCH_API void interceptor_trampoline_cclass(prepare)(hook_entry_t *entry) {
     int limit_relocate_inst_size              = 0;
     hook_entry_backend_arm64_t *entry_backend = SAFE_MALLOC_TYPE(hook_entry_backend_arm64_t);
-    entry->backend                            = entry_backend;
+    entry->backend                            = (struct _hook_entry_backend_t *)entry_backend;
 
     if (entry->is_try_near_jump) {
         entry_backend->limit_relocate_inst_size = ARM64_TINY_REDIRECT_SIZE;
