@@ -1,7 +1,12 @@
 #include "interceptor_routing.h"
+#include "thread_support/thread_stack.h"
 
 void interceptor_routing_begin(RegState *rs, hook_entry_t *entry, void *next_hop_addr_PTR, void *ret_addr_PTR) {
     // DEBUG_LOG("target %p call begin-invocation", entry->target_ptr);
+
+    thread_stack_manager_t *thread_stack_manager = thread_stack_cclass(shared_instance)();
+    call_stack_t *call_stack                     = call_stack_cclass(new)(thread_stack_manager);
+    thread_stack_cclass(push_call_stack)(thread_stack_manager, call_stack);
 
     // call pre_call
     if (entry->pre_call) {
@@ -10,7 +15,9 @@ void interceptor_routing_begin(RegState *rs, hook_entry_t *entry, void *next_hop
         entryInfo.hook_id        = entry->id;
         entryInfo.target_address = entry->target_address;
         pre_call                 = entry->pre_call;
-        (*pre_call)(rs, (ThreadStackPublic *)NULL, (CallStackPublic *)NULL, &entryInfo);
+        ThreadStackPublic tsp    = {thread_stack_manager->thread_id, thread_stack_manager->call_stacks->len};
+        CallStackPublic csp      = {call_stack->call_id};
+        (*pre_call)(rs, &tsp, &csp, &entryInfo);
     }
 
     // set next hop
@@ -21,14 +28,17 @@ void interceptor_routing_begin(RegState *rs, hook_entry_t *entry, void *next_hop
     }
 
     if (entry->type == HOOK_TYPE_FUNCTION_via_PRE_POST || entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
-        // TODO
-        // callStack->ret_addr_PTR   = *(zz_ptr_t *)ret_addr_PTR;
+        call_stack->ret_addr      = *(zz_ptr_t *)ret_addr_PTR;
         *(zz_ptr_t *)ret_addr_PTR = entry->on_leave_trampoline;
     }
 }
 
 void interceptor_routing_end(RegState *rs, hook_entry_t *entry, void *next_hop_addr_PTR) {
     // DEBUG_LOG("%p call end-invocation", entry->target_ptr);
+
+    thread_stack_manager_t *thread_stack_manager = thread_stack_cclass(shared_instance)();
+
+    call_stack_t *call_stack = thread_stack_cclass(pop_call_stack)(thread_stack_manager);
 
     // call post_call
     if (entry->post_call) {
@@ -37,12 +47,15 @@ void interceptor_routing_end(RegState *rs, hook_entry_t *entry, void *next_hop_a
         entryInfo.hook_id        = entry->id;
         entryInfo.target_address = entry->target_address;
         post_call                = entry->post_call;
-        (*post_call)(rs, (ThreadStackPublic *)NULL, (CallStackPublic *)NULL, (const HookEntryInfo *)&entryInfo);
+        ThreadStackPublic tsp    = {thread_stack_manager->thread_id, thread_stack_manager->call_stacks->len};
+        CallStackPublic csp      = {call_stack->call_id};
+        (*post_call)(rs, &tsp, &csp, (const HookEntryInfo *)&entryInfo);
     }
 
-    // TODO
     // set next hop
-    // *(zz_ptr_t *)next_hop_addr_PTR = callStack->ret_addr_PTR;
+    *(zz_ptr_t *)next_hop_addr_PTR = call_stack->ret_addr;
+
+    call_stack_cclass(destory)(call_stack);
 }
 
 void interceptor_routing_dynamic_binary_instrumentation(RegState *rs, hook_entry_t *entry, void *next_hop_addr_PTR) {

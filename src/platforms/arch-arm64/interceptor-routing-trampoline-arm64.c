@@ -174,7 +174,8 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry
     if (entry->type == HOOK_TYPE_FUNCTION_via_GOT) {
         ClosureBridgeInfo *cbInfo = NULL;
         ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
-        ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
+        cbInfo =
+            ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
         if (cbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");
         }
@@ -184,7 +185,8 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter)(hook_entry_t *entry
     if (entry->type != HOOK_TYPE_FUNCTION_via_GOT) {
         ClosureBridgeInfo *cbInfo = NULL;
         ClosureBridge *cb         = ClosureBridgeCClass(SharedInstance)();
-        ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
+        cbInfo =
+            ClosureBridgeCClass(AllocateClosureBridge)(cb, entry, (void *)interceptor_routing_begin_bridge_handler);
 
         if (cbInfo == NULL) {
             ERROR_LOG_STR("build closure bridge failed!!!");

@@ -9,5 +9,6 @@ void *safe_malloc(size_t size) {
         ERROR_LOG_STR("[!] malloc return NULL !!!");
         return data;
     }
+    memset(data, 0, size);
     return data;
 }

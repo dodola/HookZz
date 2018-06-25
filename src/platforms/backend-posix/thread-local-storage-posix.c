@@ -1,6 +1,6 @@
 #include "thread_local_storage.h"
-#ifndef thread_local
 
+#ifndef thread_local
 #include <pthread.h>
 static pthread_key_t _thread_variable_key = 0;
 

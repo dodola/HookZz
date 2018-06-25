@@ -109,12 +109,11 @@ typedef enum _HookType {
 
 typedef struct _CallStackPublic {
     unsigned long call_id;
-    struct _ThreadStack *ts;
 } CallStackPublic;
 
 typedef struct _ThreadStackPublic {
     unsigned long thread_id;
-    unsigned long size;
+    unsigned long call_stack_count;
 } ThreadStackPublic;
 
 typedef struct _HookEntryInfo {
@@ -122,8 +121,8 @@ typedef struct _HookEntryInfo {
     void *target_address;
 } HookEntryInfo;
 
-typedef void (*PRECALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
-typedef void (*POSTCALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
+typedef void (*PRECALL)(RegState *rs, ThreadStackPublic *tsp, CallStackPublic *csp, const HookEntryInfo *info);
+typedef void (*POSTCALL)(RegState *rs, ThreadStackPublic *tsp, CallStackPublic *csp, const HookEntryInfo *info);
 typedef void (*DBICALL)(RegState *rs, const HookEntryInfo *info);
 
 // use pre_call and post_call wrap a function
