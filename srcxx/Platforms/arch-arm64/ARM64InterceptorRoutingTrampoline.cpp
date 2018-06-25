@@ -71,7 +71,7 @@ void ARM64InterceptorBackend::BuildForEnterTransfer(HookEntry *entry) {
     relocatorARM64->output->put_br_reg(ARM64_REG_X17);
     if (entry->hook_type == HOOK_TYPE_FUNCTION_via_REPLACE) {
         relocatorARM64->output->putBytes(&entry->replace_call, sizeof(void *));
-    } else if (entry->hook_type == HOOK_TYPE_DBI) {
+    } else if (entry->hook_type == HOOK_TYPE_INSTRUCTION_via_DBI) {
         relocatorARM64->output->putBytes(&entry->on_dynamic_binary_instrumentation_trampoline, sizeof(void *));
     } else {
         relocatorARM64->output->putBytes(&entry->on_enter_trampoline, sizeof(void *));

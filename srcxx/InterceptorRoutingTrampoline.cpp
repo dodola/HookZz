@@ -17,7 +17,7 @@ void InterceptorRoutingTrampoline::BuildAllTrampoline(HookEntry *entry) {
     } else if (entry->hook_type == HOOK_TYPE_FUNCTION_via_GOT) {
         BuildForEnter(entry);
         BuildForLeave(entry);
-    } else if (entry->hook_type == HOOK_TYPE_DBI) {
+    } else if (entry->hook_type == HOOK_TYPE_INSTRUCTION_via_DBI) {
         Prepare(entry);
         BuildForDynamicBinaryInstrumentation(entry);
         BuildForInvoke(entry);

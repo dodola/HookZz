@@ -7,9 +7,9 @@ void interceptor_routing_begin(RegState *rs, hook_entry_t *entry, void *next_hop
     if (entry->pre_call) {
         PRECALL pre_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_address;
-        pre_call               = entry->pre_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_address;
+        pre_call                 = entry->pre_call;
         (*pre_call)(rs, (ThreadStackPublic *)NULL, (CallStackPublic *)NULL, &entryInfo);
     }
 
@@ -34,9 +34,9 @@ void interceptor_routing_end(RegState *rs, hook_entry_t *entry, void *next_hop_a
     if (entry->post_call) {
         POSTCALL post_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_address;
-        post_call              = entry->post_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_address;
+        post_call                = entry->post_call;
         (*post_call)(rs, (ThreadStackPublic *)NULL, (CallStackPublic *)NULL, (const HookEntryInfo *)&entryInfo);
     }
 
@@ -51,9 +51,9 @@ void interceptor_routing_dynamic_binary_instrumentation(RegState *rs, hook_entry
     if (entry->dbi_call) {
         DBICALL dbi_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_address;
-        dbi_call               = entry->dbi_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_address;
+        dbi_call                 = entry->dbi_call;
         (*dbi_call)(rs, (const HookEntryInfo *)&entryInfo);
     }
 

@@ -26,9 +26,9 @@ void context_begin_invocation(RegState *rs, hook_entry_t *entry, void *next_hop_
     if (entry->pre_call) {
         PRECALL pre_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_ptr;
-        pre_call               = entry->pre_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_ptr;
+        pre_call                 = entry->pre_call;
         (*pre_call)(rs, (ThreadStackPublic *)threadstack, (CallStackPublic *)callstack, &entryInfo);
     }
 
@@ -65,9 +65,9 @@ void context_end_invocation(RegState *rs, hook_entry_t *entry, void *next_hop_ad
     if (entry->post_call) {
         POSTCALL post_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_ptr;
-        post_call              = entry->post_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_ptr;
+        post_call                = entry->post_call;
         (*post_call)(rs, (ThreadStackPublic *)threadstack, (CallStackPublic *)callstack,
                      (const HookEntryInfo *)&entryInfo);
     }
@@ -91,9 +91,9 @@ void dynamic_binary_instrumentation_invocation(RegState *rs, hook_entry_t *entry
     if (entry->dbi_call) {
         DBICALL dbi_call;
         HookEntryInfo entryInfo;
-        entryInfo.hook_id      = entry->id;
-        entryInfo.hook_address = entry->target_ptr;
-        dbi_call               = entry->dbi_call;
+        entryInfo.hook_id        = entry->id;
+        entryInfo.target_address = entry->target_ptr;
+        dbi_call                 = entry->dbi_call;
         (*dbi_call)(rs, (const HookEntryInfo *)&entryInfo);
     }
 

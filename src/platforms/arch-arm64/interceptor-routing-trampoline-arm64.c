@@ -70,7 +70,7 @@ ARCH_API void interceptor_trampoline_cclass(active)(hook_entry_t *entry) {
         arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
         if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
             arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_enter_transfer_trampoline, sizeof(void *));
-        } else if (entry->type == HOOK_TYPE_DBI) {
+        } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
             arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_dynamic_binary_instrumentation_trampoline,
                                                     sizeof(void *));
         } else {
@@ -98,8 +98,8 @@ ARCH_API void interceptor_trampoline_cclass(active)(hook_entry_t *entry) {
             sprintf(buffer + strlen(buffer), "\ton_enter_transfer_trampoline: %p\n",
                     entry->on_enter_transfer_trampoline);
 
-        if (entry->type == HOOK_TYPE_DBI) {
-            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_DBI\n");
+        if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_INSTRUCTION_via_DBI\n");
             sprintf(buffer + strlen(buffer), "\ton_dynamic_binary_instrumentation_trampoline: %p\n",
                     entry->on_dynamic_binary_instrumentation_trampoline);
             sprintf(buffer + strlen(buffer), "\ton_invoke_trampoline: %p\n", entry->on_invoke_trampoline);
@@ -131,7 +131,7 @@ ARCH_API void interceptor_trampoline_cclass(build_for_enter_transfer)(hook_entry
     arm64_assembly_writer_cclass(put_br_reg)(writer_arm64, ARM64_REG_X17);
     if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
         arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->replace_call, sizeof(void *));
-    } else if (entry->type == HOOK_TYPE_DBI) {
+    } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
         arm64_assembly_writer_cclass(put_bytes)(writer_arm64, &entry->on_dynamic_binary_instrumentation_trampoline,
                                                 sizeof(void *));
     } else {

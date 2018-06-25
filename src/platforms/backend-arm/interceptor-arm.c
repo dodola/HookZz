@@ -157,7 +157,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
         if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
 
             thumb_writer_put_ldr_reg_address(thumb_writer, ARM_REG_PC, (zz_addr_t)entry->replace_call);
-        } else if (entry->type == HOOK_TYPE_DBI) {
+        } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
             thumb_writer_put_ldr_reg_address(thumb_writer, ARM_REG_PC,
                                              (zz_addr_t)entry->on_dynamic_binary_instrumentation_trampoline);
         } else {
@@ -180,7 +180,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
 
         if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
             arm_writer_put_ldr_reg_address(arm_writer, ARM_REG_PC, (zz_addr_t)entry->replace_call);
-        } else if (entry->type == HOOK_TYPE_DBI) {
+        } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
             arm_writer_put_ldr_reg_address(arm_writer, ARM_REG_PC,
                                            (zz_addr_t)entry->on_dynamic_binary_instrumentation_trampoline);
         } else {
@@ -208,7 +208,7 @@ void trampoline_build_for_enter_transfer(InterceptorBackend *self, hook_entry_t 
         sprintf(buffer + strlen(buffer), "\thook_entry: %p\n", (void *)entry);
         if (entry->type == HOOK_TYPE_FUNCTION_via_REPLACE) {
             sprintf(buffer + strlen(buffer), "\tjump_target: replace_call(%p)\n", (void *)entry->replace_call);
-        } else if (entry->type == HOOK_TYPE_DBI) {
+        } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
             sprintf(buffer + strlen(buffer), "\tjump_target: on_dynamic_binary_instrumentation_trampoline(%p)\n",
                     (void *)entry->on_dynamic_binary_instrumentation_trampoline);
         } else {
@@ -554,8 +554,8 @@ void trampoline_active(InterceptorBackend *self, hook_entry_t *entry) {
             sprintf(buffer + strlen(buffer), "\ton_enter_transfer_trampoline: %p\n",
                     entry->on_enter_transfer_trampoline);
 
-        if (entry->type == HOOK_TYPE_DBI) {
-            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_DBI\n");
+        if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
+            sprintf(buffer + strlen(buffer), "\tHook Type: HOOK_TYPE_INSTRUCTION_via_DBI\n");
             sprintf(buffer + strlen(buffer), "\ton_dynamic_binary_instrumentation_trampoline: %p\n",
                     entry->on_dynamic_binary_instrumentation_trampoline);
             sprintf(buffer + strlen(buffer), "\ton_invoke_trampoline: %p\n", entry->on_invoke_trampoline);

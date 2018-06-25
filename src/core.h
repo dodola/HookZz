@@ -19,4 +19,6 @@
 /* indicate this API's implemention is Architecture dependent */
 #define ARCH_API
 
+/* hidden funtion */
+#define VIS_HIDDEN __attribute__((visibility("hidden")))
 #endif

@@ -14,7 +14,7 @@ void interceptor_trampoline_cclass(build_all)(hook_entry_t *entry) {
         // trampoline_prepare(self, entry);
         interceptor_trampoline_cclass(build_for_enter)(entry);
         interceptor_trampoline_cclass(build_for_leave)(entry);
-    } else if (entry->type == HOOK_TYPE_DBI) {
+    } else if (entry->type == HOOK_TYPE_INSTRUCTION_via_DBI) {
         interceptor_trampoline_cclass(prepare)(entry);
         interceptor_trampoline_cclass(build_for_dynamic_binary_instrumentation)(entry);
         interceptor_trampoline_cclass(build_for_invoke)(entry);

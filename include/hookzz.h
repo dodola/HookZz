@@ -1,19 +1,3 @@
-/**
- *    Copyright 2017 jmpews
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
 #ifndef hookzz_h
 #define hookzz_h
 
@@ -105,21 +89,14 @@ typedef struct _RegState {
 #endif
 
 #define REG_SP(rs) (void *)((uintptr_t)rs + sizeof(RegState))
+
 #endif
 
 typedef enum _RetStatus {
     RS_UNKOWN = -1,
     RS_DONE = 0,
     RS_SUCCESS,
-    RS_FAILED,
-    RS_DONE_HOOK,
-    RS_DONE_INIT,
-    RS_DONE_ENABLE,
-    RS_ALREADY_HOOK,
-    RS_ALREADY_INIT,
-    RS_ALREADY_ENABLED,
-    RS_NEED_INIT,
-    RS_NO_BUILD_HOOK
+    RS_FAILED
 } RetStatus;
 
 typedef enum _HookType {
@@ -127,7 +104,7 @@ typedef enum _HookType {
     HOOK_TYPE_FUNCTION_via_PRE_POST = 0,
     HOOK_TYPE_FUNCTION_via_REPLACE,
     HOOK_TYPE_FUNCTION_via_GOT,
-    HOOK_TYPE_DBI
+    HOOK_TYPE_INSTRUCTION_via_DBI
 }HookType;
 
 typedef struct _CallStackPublic {
@@ -142,16 +119,26 @@ typedef struct _ThreadStackPublic {
 
 typedef struct _HookEntryInfo {
     unsigned long hook_id;
-    void *hook_address;
+    void *target_address;
 } HookEntryInfo;
 
 typedef void (*PRECALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
 typedef void (*POSTCALL)(RegState *rs, ThreadStackPublic *ts, CallStackPublic *cs, const HookEntryInfo *info);
 typedef void (*DBICALL)(RegState *rs, const HookEntryInfo *info);
 
-RetStatus ZzHook(void *target_address, void *replace_call, void **origin_call, PRECALL pre_call,
-                    POSTCALL post_call) ;
-// dynamic binary instrumentation
+// use pre_call and post_call wrap a function
+RetStatus ZzWrap(void *function_address, PRECALL pre_call, POSTCALL post_call);
+
+// use inline hook to replace function
+RetStatus ZzReplace(void *function_address, void *replace_call, void **origin_call);
+
+// wuse pre_call and post_call wrap a GOT(imported) function
+RetStatus ZzWrapGOT(void *image_header, char *image_name, char *function_name, PRECALL pre_call, POSTCALL post_call);
+
+// replace got
+RetStatus ZzReplaceGOT(void *image_header, char *image_name, char *function_name, void *replace_call, void **origin_call);
+
+// hook instruction with DBI
 RetStatus ZzDynamicBinaryInstrumentation(void *inst_address, DBICALL dbi_call);
 
 #ifdef __cplusplus
