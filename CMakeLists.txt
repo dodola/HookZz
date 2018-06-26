@@ -135,3 +135,5 @@ else()
     # build static library
     add_library(hookzz STATIC ${GLOBAL.SOURCE_FILE} ${GLOBAL.HEADER_FILE})
 endif()
+
+target_include_directories(hookzz PUBLIC ./include)

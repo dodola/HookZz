@@ -45,10 +45,11 @@ CodeSlice *memory_manager_cclass(allocate_code_slice)(memory_manager_t *self, in
         fmb->address         = page_ptr;
         list_rpush(self->free_memory_blocks, list_node_new(fmb));
 
-        fmb->used_size += size;
         cs       = SAFE_MALLOC_TYPE(CodeSlice);
         cs->data = (void *)(fmb->address + fmb->used_size);
         cs->size = size;
+
+        fmb->used_size += size;
         return cs;
     }
     return NULL;
